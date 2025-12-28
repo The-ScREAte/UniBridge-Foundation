@@ -55,7 +55,7 @@ const IntroVideo = () => {
                   controls
                   playsInline
                   preload="metadata"
-                  className="w-full h-[220px] sm:h-[340px] lg:h-[420px]"
+                  className="w-full h-[200px] sm:h-[300px] lg:h-[360px]"
                   poster={videoContent.poster_url}
                   style={{ objectFit: 'cover', display: 'block', background: '#000' }}
                 >
@@ -63,7 +63,7 @@ const IntroVideo = () => {
                 </video>
               ) : (
                 <div
-                  className="w-full h-[220px] sm:h-[340px] lg:h-[420px] flex items-center justify-center bg-gray-900"
+                  className="w-full h-[200px] sm:h-[300px] lg:h-[360px] flex items-center justify-center bg-gray-900"
                   style={{
                     backgroundImage: videoContent.poster_url ? `url(${videoContent.poster_url})` : 'none',
                     backgroundSize: 'cover',

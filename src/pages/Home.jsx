@@ -47,7 +47,7 @@ const Home = () => {
               <div className="lg:col-span-5">
                 <h2 className="text-3xl sm:text-4xl font-display font-bold text-unibridge-navy leading-tight">Give with confidence.</h2>
                 <p className="mt-4 text-gray-600 text-lg leading-relaxed">
-                  Your donation supports a verified case with clear goals. You'll receive updates—because giving should feel safe,
+                  Your donation supports a verified People with clear goals. You'll receive updates—because giving should feel safe,
                   personal, and real.
                 </p>
                 <div className="mt-6 grid gap-3">

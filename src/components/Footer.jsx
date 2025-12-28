@@ -21,7 +21,7 @@ const Footer = () => {
             </div>
 
             <p className="mt-5 text-blue-50/90 leading-relaxed">
-              UniBridge connects donors to verified cases and community partners, with clear purpose and follow‑up updates.
+              UniBridge connects donors to verified Organizations and Individuals, with clear purpose and follow‑up updates.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">

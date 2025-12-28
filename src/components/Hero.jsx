@@ -53,10 +53,11 @@ const Hero = () => {
             We care for<br />those you love.
           </h1>
 
-          <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl lg:text-2xl text-blue-50/95 leading-relaxed max-w-3xl mx-auto drop-shadow">
-            We connect donors to verified people and community projects—so your giving reaches the right hands with clear purpose,
+          <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl lg:text-2xl text-blue-50/95 leading-relaxed max-w-3xl mx-auto drop-shadow font-semibold">
+            We connect donors to verified Organizations and Individuals—so your giving reaches the right hands with clear purpose,
             accountability, and follow‑up updates.
           </p>
+          
 
           <div className="mt-6 sm:mt-8 md:mt-10 flex justify-center">
             <a
