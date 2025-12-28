@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import IntroVideo from '../components/IntroVideo';
@@ -101,9 +102,52 @@ const Home = () => {
                   </div>
                   <h3 className="mt-5 text-xl font-serif font-bold text-unibridge-navy">{card.title}</h3>
                   <p className="mt-3 text-gray-600 leading-relaxed">{card.body}</p>
-                  <div className="mt-6 text-sm font-semibold text-unibridge-blue">Learn more →</div>
+                  <Link to="/about" className="mt-6 inline-block text-sm font-semibold text-unibridge-blue hover:text-unibridge-navy transition-colors">Learn more →</Link>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+        {/* Stats Section */}
+        <section className="bg-white py-12 sm:py-16 md:py-20">
+          <div className="ub-container">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-6 lg:gap-8 text-center">
+              <div className="p-6 sm:p-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-unibridge-blue/10 mb-4">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 text-unibridge-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-light text-unibridge-navy mb-2">2024</div>
+                <p className="text-gray-600 text-sm sm:text-base font-medium">Operating Since</p>
+              </div>
+              <div className="p-6 sm:p-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-unibridge-blue/10 mb-4">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 text-unibridge-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-light text-unibridge-navy mb-2">20+</div>
+                <p className="text-gray-600 text-sm sm:text-base font-medium">Partner Organizations</p>
+              </div>
+              <div className="p-6 sm:p-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-unibridge-blue/10 mb-4">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 text-unibridge-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                </div>
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-light text-unibridge-navy mb-2">200+</div>
+                <p className="text-gray-600 text-sm sm:text-base font-medium">Lives Impacted</p>
+              </div>
+              <div className="p-6 sm:p-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-unibridge-blue/10 mb-4">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 text-unibridge-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-light text-unibridge-navy mb-2">5+</div>
+                <p className="text-gray-600 text-sm sm:text-base font-medium">Countries Reached</p>
+              </div>
             </div>
           </div>
         </section>

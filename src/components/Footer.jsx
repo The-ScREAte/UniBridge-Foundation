@@ -9,7 +9,7 @@ const Footer = () => {
 
   return (
     <footer className="bg-gradient-to-b from-unibridge-navy to-unibridge-blue text-white">
-      <div className="max-w-7xl mx-auto px-4 pt-14 pb-10">
+      <div className="max-w-7xl mx-auto px-4 py-5">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-10">
           <div className="max-w-md">
             <div className="flex items-center space-x-3">

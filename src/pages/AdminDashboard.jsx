@@ -562,24 +562,24 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <img src="/logo.png" alt="UniBridge Logo" className="h-10 w-auto" />
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <img src="/logo.png" alt="UniBridge Logo" className="h-8 sm:h-10 w-auto" />
             <div>
-              <h1 className="text-2xl font-bold text-unibridge-navy">Admin Dashboard</h1>
-              <p className="text-sm text-gray-600">Manage Content</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-unibridge-navy">Admin Dashboard</h1>
+              <p className="text-xs sm:text-sm text-gray-600">Manage Content</p>
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-2 sm:gap-4 w-full sm:w-auto">
             <a
               href="/"
-              className="px-4 py-2 text-unibridge-blue hover:text-unibridge-navy transition-colors font-medium"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base text-unibridge-blue hover:text-unibridge-navy transition-colors font-medium"
             >
               View Site
             </a>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 text-sm sm:text-base bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
               Logout
             </button>
@@ -588,12 +588,12 @@ const AdminDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {/* Tabs */}
-        <div className="flex gap-4 mb-8 border-b border-gray-200">
+        <div className="flex gap-2 sm:gap-4 mb-6 sm:mb-8 border-b border-gray-200 overflow-x-auto pb-px">
           <button
             onClick={() => setActiveTab('organizations')}
-            className={`px-6 py-3 font-semibold transition-colors ${
+            className={`px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'organizations'
                 ? 'text-unibridge-blue border-b-2 border-unibridge-blue'
                 : 'text-gray-600 hover:text-gray-900'
@@ -603,17 +603,17 @@ const AdminDashboard = () => {
           </button>
           <button
             onClick={() => setActiveTab('team')}
-            className={`px-6 py-3 font-semibold transition-colors ${
+            className={`px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'team'
                 ? 'text-unibridge-blue border-b-2 border-unibridge-blue'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Team Members
+            Team
           </button>
           <button
             onClick={() => setActiveTab('opportunities')}
-            className={`px-6 py-3 font-semibold transition-colors ${
+            className={`px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'opportunities'
                 ? 'text-unibridge-blue border-b-2 border-unibridge-blue'
                 : 'text-gray-600 hover:text-gray-900'
@@ -623,50 +623,50 @@ const AdminDashboard = () => {
           </button>
           <button
             onClick={() => setActiveTab('content')}
-            className={`px-6 py-3 font-semibold transition-colors ${
+            className={`px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'content'
                 ? 'text-unibridge-blue border-b-2 border-unibridge-blue'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Content & Messages
+            Content
           </button>
           <button
             onClick={() => setActiveTab('hero')}
-            className={`px-6 py-3 font-semibold transition-colors ${
+            className={`px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'hero'
                 ? 'text-unibridge-blue border-b-2 border-unibridge-blue'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Hero Section
+            Hero
           </button>
           <button
             onClick={() => setActiveTab('intro-video')}
-            className={`px-6 py-3 font-semibold transition-colors ${
+            className={`px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold transition-colors whitespace-nowrap ${
               activeTab === 'intro-video'
                 ? 'text-unibridge-blue border-b-2 border-unibridge-blue'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Intro Video
+            Video
           </button>
         </div>
 
         {/* Organizations Tab */}
         {activeTab === 'organizations' && (
           <>
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold text-unibridge-navy">Organizations</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy">Organizations</h2>
               <button
                 onClick={() => {
                   setEditingOrg(null);
                   setOrgForm({ name: '', description: '', profileImage: '', partnerSince: new Date().getFullYear().toString() });
                   setShowAddModal(true);
                 }}
-                className="bg-unibridge-blue text-white px-6 py-3 rounded-lg hover:bg-unibridge-navy transition-colors font-semibold flex items-center gap-2"
+                className="w-full sm:w-auto bg-unibridge-blue text-white px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg hover:bg-unibridge-navy transition-colors font-semibold flex items-center justify-center gap-2"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 Add Organization
@@ -775,17 +775,17 @@ const AdminDashboard = () => {
     {/* Team Members Tab */}
     {activeTab === 'team' && (
       <>
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold text-unibridge-navy">Team Members</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy">Team Members</h2>
               <button
                 onClick={() => {
                   setEditingMember(null);
                   setTeamForm({ name: '', role: '', image: '', bio: '' });
                   setShowTeamModal(true);
                 }}
-                className="bg-unibridge-blue text-white px-6 py-3 rounded-lg hover:bg-unibridge-navy transition-colors font-semibold flex items-center gap-2"
+                className="w-full sm:w-auto bg-unibridge-blue text-white px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg hover:bg-unibridge-navy transition-colors font-semibold flex items-center justify-center gap-2"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 Add Team Member
@@ -848,8 +848,8 @@ const AdminDashboard = () => {
         {/* Opportunities Tab */}
         {activeTab === 'opportunities' && (
           <>
-            <div className="flex justify-between items-center mb-8">
-              <h2 className="text-3xl font-bold text-unibridge-navy">Volunteering Opportunities</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy">Volunteering Opportunities</h2>
               <button
                 onClick={() => {
                   setEditingOpportunity(null);
@@ -864,9 +864,9 @@ const AdminDashboard = () => {
                   });
                   setShowOpportunityModal(true);
                 }}
-                className="bg-unibridge-blue text-white px-6 py-3 rounded-lg hover:bg-unibridge-navy transition-colors font-semibold flex items-center gap-2"
+                className="w-full sm:w-auto bg-unibridge-blue text-white px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg hover:bg-unibridge-navy transition-colors font-semibold flex items-center justify-center gap-2"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
                 Add Opportunity
@@ -940,12 +940,12 @@ const AdminDashboard = () => {
           <>
             <div className="space-y-8">
               {/* About Content Section */}
-              <div className="bg-white rounded-xl shadow-md p-8">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-3xl font-bold text-unibridge-navy">About Page Content</h2>
+              <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 md:p-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy">About Page Content</h2>
                   <button
                     onClick={handleSaveAboutContent}
-                    className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                    className="w-full sm:w-auto bg-green-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg hover:bg-green-700 transition-colors font-semibold"
                   >
                     Save Changes
                   </button>
@@ -1007,8 +1007,8 @@ const AdminDashboard = () => {
               </div>
 
               {/* Contact Messages Section */}
-              <div className="bg-white rounded-xl shadow-md p-8">
-                <h2 className="text-3xl font-bold text-unibridge-navy mb-6">Contact Messages</h2>
+              <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 md:p-8">
+                <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy mb-6">Contact Messages</h2>
                 
                 {contactMessages.length === 0 ? (
                   <div className="text-center py-12 bg-gray-50 rounded-lg">
@@ -1507,7 +1507,7 @@ const AdminDashboard = () => {
       {/* Hero Section Tab */}
       {activeTab === 'hero' && (
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-unibridge-navy mb-8">Hero Section</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy mb-6 sm:mb-8">Hero Section</h2>
           
           <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
             {/* Title */}
@@ -1642,7 +1642,7 @@ const AdminDashboard = () => {
       {/* Intro Video Tab */}
       {activeTab === 'intro-video' && (
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-unibridge-navy mb-8">Intro Video</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy mb-6 sm:mb-8">Intro Video</h2>
           
           <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
             {/* Active Toggle */}
