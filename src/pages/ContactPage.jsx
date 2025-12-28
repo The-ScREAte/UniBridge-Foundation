@@ -45,11 +45,11 @@ const ContactPage = () => {
       <div className="pt-24 pb-20 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-6xl font-bold text-unibridge-navy mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-unibridge-navy mb-4">
               Contact Us
             </h1>
             <div className="w-20 h-1 bg-unibridge-blue mx-auto mb-6"></div>
-            <p className="text-xl text-gray-600">
+            <p className="text-lg sm:text-xl text-gray-600">
               Get in touch with UniBridge Foundation
             </p>
           </div>
@@ -58,7 +58,7 @@ const ContactPage = () => {
             {/* Contact Info */}
             <div className="space-y-8">
               <div>
-                <h2 className="text-2xl font-bold text-unibridge-navy mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-unibridge-navy mb-6">
                   Let's Connect
                 </h2>
                 <p className="text-gray-600 leading-relaxed mb-8">

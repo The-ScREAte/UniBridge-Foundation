@@ -1,17 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { opportunityService } from '../utils/storage';
 
 const Opportunities = ({ className = '' }) => {
   const [opportunities, setOpportunities] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOpportunities = async () => {
-      const data = await opportunityService.getAllOpportunities();
-      setOpportunities(data);
+      try {
+        setLoading(true);
+        const data = await opportunityService.getAllOpportunities();
+        setOpportunities(data);
+      } catch (error) {
+        console.error('Failed to load opportunities:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchOpportunities();
   }, []);
+
+  if (loading) {
+    return null; // Or show a loading skeleton
+  }
 
   if (opportunities.length === 0) {
     return null;

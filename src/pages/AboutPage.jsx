@@ -51,29 +51,29 @@ const AboutPage = () => {
         {/* Mission Section */}
         <div className="max-w-4xl mx-auto mb-24">
           <div className="text-center mb-12">
-            <h1 className="text-5xl md:text-6xl font-bold text-unibridge-navy mb-4">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-unibridge-navy mb-4">
               About UniBridge
             </h1>
             <div className="w-20 h-1 bg-unibridge-blue mx-auto"></div>
           </div>
 
           <div className="prose prose-lg max-w-none">
-            <p className="text-xl text-gray-700 leading-relaxed mb-6">
+            <p className="text-lg sm:text-xl text-gray-700 leading-relaxed mb-6">
               {aboutContent.intro}
             </p>
             
-            <h2 className="text-3xl font-bold text-unibridge-navy mt-12 mb-6">Our Mission</h2>
-            <p className="text-lg text-gray-700 leading-relaxed mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy mt-12 mb-6">Our Mission</h2>
+            <p className="text-base sm:text-lg text-gray-700 leading-relaxed mb-6">
               {aboutContent.mission}
             </p>
 
-            <h2 className="text-3xl font-bold text-unibridge-navy mt-12 mb-6">What We Do</h2>
-            <p className="text-lg text-gray-700 leading-relaxed mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy mt-12 mb-6">What We Do</h2>
+            <p className="text-base sm:text-lg text-gray-700 leading-relaxed mb-6">
               {aboutContent.whatWeDo}
             </p>
 
-            <h2 className="text-3xl font-bold text-unibridge-navy mt-12 mb-6">Volunteer Experience</h2>
-            <p className="text-lg text-gray-700 leading-relaxed mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy mt-12 mb-6">Volunteer Experience</h2>
+            <p className="text-base sm:text-lg text-gray-700 leading-relaxed mb-6">
               {aboutContent.volunteerExperience}
             </p>
 
@@ -92,11 +92,11 @@ const AboutPage = () => {
         {/* Team Section */}
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-unibridge-navy mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-unibridge-navy mb-4">
               Our Team
             </h2>
             <div className="w-20 h-1 bg-unibridge-blue mx-auto mb-6"></div>
-            <p className="text-xl text-gray-600">
+            <p className="text-lg sm:text-xl text-gray-600">
               The people making it happen
             </p>
           </div>

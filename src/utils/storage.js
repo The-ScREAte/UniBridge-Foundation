@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { supabase, cacheManager } from './supabaseClient';
 
 // Authentication utilities
 export const authService = {
@@ -55,9 +55,16 @@ export const authService = {
 export const organizationService = {
   // Get all organizations
   getAllOrganizations: async () => {
+    // Check cache first
+    const cacheKey = 'all_organizations';
+    const cached = cacheManager.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+    
     const { data, error } = await supabase
       .from('organizations')
-      .select('*')
+      .select('id, name, description, profile_image, partner_since, created_at, updated_at')
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -66,7 +73,7 @@ export const organizationService = {
     }
     
     // Transform snake_case to camelCase for frontend
-    return (data || []).map(org => ({
+    const transformed = (data || []).map(org => ({
       id: org.id,
       name: org.name,
       description: org.description,
@@ -76,6 +83,10 @@ export const organizationService = {
       createdAt: org.created_at,
       updatedAt: org.updated_at
     }));
+    
+    // Cache the result
+    cacheManager.set(cacheKey, transformed);
+    return transformed;
   },
 
   // Get organization by ID
@@ -127,6 +138,9 @@ export const organizationService = {
       return null;
     }
     
+    // Clear cache after adding
+    cacheManager.clear('all_organizations');
+    
     // Transform snake_case back to camelCase for frontend
     return data ? {
       id: data.id,
@@ -167,6 +181,10 @@ export const organizationService = {
       return null;
     }
     
+    // Clear cache after updating
+    cacheManager.clear('all_organizations');
+    cacheManager.clear(`organization_${id}`);
+    
     // Transform snake_case back to camelCase for frontend
     return data ? {
       id: data.id,
@@ -191,6 +209,10 @@ export const organizationService = {
       console.error('Error deleting organization:', error);
       return false;
     }
+    
+    // Clear cache after deleting
+    cacheManager.clear('all_organizations');
+    cacheManager.clear(`organization_${id}`);
     return true;
   },
 
@@ -415,16 +437,27 @@ export const messageService = {
 export const opportunityService = {
   // Get all opportunities
   getAllOpportunities: async () => {
+    // Check cache first
+    const cacheKey = 'all_opportunities';
+    const cached = cacheManager.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+    
     const { data, error } = await supabase
       .from('opportunities')
-      .select('*')
+      .select('id, title, brief, description, image, organization_id, created_at, updated_at')
       .order('created_at', { ascending: false });
     
     if (error) {
       console.error('Error fetching opportunities:', error);
       return [];
     }
-    return data || [];
+    
+    // Cache the result
+    const result = data || [];
+    cacheManager.set(cacheKey, result);
+    return result;
   },
 
   // Get opportunity by ID
@@ -454,6 +487,9 @@ export const opportunityService = {
       console.error('Error adding opportunity:', error);
       return null;
     }
+    
+    // Clear cache after adding
+    cacheManager.clear('all_opportunities');
     return data;
   },
 
@@ -470,6 +506,10 @@ export const opportunityService = {
       console.error('Error updating opportunity:', error);
       return null;
     }
+    
+    // Clear cache after updating
+    cacheManager.clear('all_opportunities');
+    cacheManager.clear(`opportunity_${id}`);
     return data;
   },
 
@@ -492,6 +532,13 @@ export const opportunityService = {
 export const aboutService = {
   // Get about content
   getAboutContent: async () => {
+    // Check cache first
+    const cacheKey = 'about_content';
+    const cached = cacheManager.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+    
     const { data, error } = await supabase
       .from('about_content')
       .select('*')
@@ -501,13 +548,18 @@ export const aboutService = {
     if (error) {
       console.error('Error fetching about content:', error);
       // Return defaults if no content exists
-      return {
+      const defaults = {
         intro: "It's hard to believe people or know if your donation and help is getting into the right hands. This is where UniBridge comes in.",
         mission: 'UniBridge Foundation is a non-profit organization focused on finding opportunities for organizations and people who need them most. We serve as a bridge between those who want to help and those who need support.',
         what_we_do: 'We find, verify, and channel help to the right people and organizations. Our rigorous vetting process ensures that every donation, every resource, and every bit of support reaches verified recipients who truly need it.',
         volunteer_experience: 'While on the mission of helping, volunteers who join us will also experience safari trips during their service. We believe in creating meaningful connections not just with the communities we serve, but also with the beautiful environments we work in.'
       };
+      cacheManager.set(cacheKey, defaults);
+      return defaults;
     }
+    
+    // Cache the result
+    cacheManager.set(cacheKey, data);
     return data;
   },
 
@@ -533,6 +585,8 @@ export const aboutService = {
         console.error('Error updating about content:', error);
         return null;
       }
+      // Clear cache after updating
+      cacheManager.clear('about_content');
       return data;
     } else {
       // Insert new
@@ -546,6 +600,8 @@ export const aboutService = {
         console.error('Error creating about content:', error);
         return null;
       }
+      // Clear cache after creating
+      cacheManager.clear('about_content');
       return data;
     }
   }

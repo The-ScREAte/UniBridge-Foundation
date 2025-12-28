@@ -36,11 +36,11 @@ const OrganizationsPage = () => {
       <div className="pt-24 pb-20 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
-            <h1 className="text-5xl md:text-6xl font-bold text-unibridge-navy mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-unibridge-navy mb-4">
               Our Partner Organizations
             </h1>
             <div className="w-20 h-1 bg-unibridge-blue mx-auto mb-6"></div>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
               Verified organizations we're proud to support
             </p>
 
@@ -84,7 +84,7 @@ const OrganizationsPage = () => {
                   </div>
                   
                   <div className="p-6">
-                    <h3 className="text-2xl font-bold text-unibridge-navy mb-3">
+                    <h3 className="text-xl sm:text-2xl font-bold text-unibridge-navy mb-3">
                       {org.name}
                     </h3>
                     <p className="text-gray-600 line-clamp-2 leading-relaxed mb-4">

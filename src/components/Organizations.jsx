@@ -1,20 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { organizationService } from '../utils/storage';
 
 const Organizations = () => {
   const [organizations, setOrganizations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrganizations = async () => {
-      const orgs = await organizationService.getAllOrganizations();
-      setOrganizations(orgs);
+      try {
+        setLoading(true);
+        const orgs = await organizationService.getAllOrganizations();
+        setOrganizations(orgs);
+      } catch (error) {
+        console.error('Failed to load organizations:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchOrganizations();
   }, []);
 
-  if (organizations.length === 0) {
-    return (
+  // Memoize the empty state component
+  const emptyState = useMemo(() => (
       <section id="organizations" className="bg-gray-50 px-2 py-8 sm:px-4 sm:py-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-10">
@@ -44,7 +52,26 @@ const Organizations = () => {
           </div>
         </div>
       </section>
+    ), []);
+
+  if (loading) {
+    return (
+      <section id="organizations" className="bg-gray-50 px-2 py-8 sm:px-4 sm:py-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-unibridge-navy mb-4">Our Partner Organizations</h2>
+            <div className="w-20 h-1 bg-unibridge-blue mx-auto mb-6"></div>
+          </div>
+          <div className="flex justify-center py-12">
+            <div className="animate-pulse text-unibridge-blue">Loading organizations...</div>
+          </div>
+        </div>
+      </section>
     );
+  }
+
+  if (organizations.length === 0) {
+    return emptyState;
   }
 
   const featured = organizations.slice(0, 6);
