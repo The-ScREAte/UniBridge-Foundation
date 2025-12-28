@@ -12,6 +12,7 @@ export default {
       },
       fontFamily: {
         'sans': ['Inter', 'system-ui', 'sans-serif'],
+        'serif': ['Libre Baskerville', 'Georgia', 'Times New Roman', 'serif'],
       },
     },
   },

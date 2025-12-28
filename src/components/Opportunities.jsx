@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { opportunityService } from '../utils/storage';
 
-const Opportunities = () => {
+const Opportunities = ({ className = '' }) => {
   const [opportunities, setOpportunities] = useState([]);
 
   useEffect(() => {
@@ -18,54 +18,139 @@ const Opportunities = () => {
   }
 
   return (
-    <section id="opportunities" className="py-5 px-4 bg-white">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8 sm:mb-12 md:mb-20">
-          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-unibridge-navy mb-3 sm:mb-4">
-            Volunteering Needs & Service Opportunities
-          </h2>
-          <div className="w-16 sm:w-20 h-1 bg-unibridge-blue mx-auto"></div>
+    <section id="opportunities" className={`ub-section ${className}`.trim()}>
+      <div className="ub-container">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
+          <div className="text-center md:text-left">
+            <h2 className="ub-section-title">
+              Volunteering Needs & Service Opportunities
+            </h2>
+            <div className="mt-4 w-20 h-1 bg-unibridge-blue mx-auto md:mx-0"></div>
+            <p className="mt-5 text-gray-600 text-base sm:text-lg max-w-3xl mx-auto md:mx-0">
+              Verified opportunities from partner organizations. Browse and learn what support is needed right now.
+            </p>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {opportunities.map((opp) => (
-            <Link
-              key={opp.id}
-              to={`/opportunity/${opp.id}`}
-              className="group bg-gray-50 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 text-sm mx-auto"
-              style={{ minHeight: 0, maxWidth: 270, width: '100%' }}
+        {/* Mobile: swipeable row (faster browsing) */}
+        <div className="lg:hidden">
+          <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
+            {opportunities.map((opp) => {
+              const title = (opp.title || 'Opportunity').toString();
+              const brief = (opp.brief || opp.description || '').toString();
+              return (
+                <Link
+                  key={opp.id}
+                  to={`/opportunity/${opp.id}`}
+                  className="snap-start shrink-0 w-[176px] xs:w-[176px] sm:w-[240px] rounded-2xl bg-white border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+                >
+                  <div className="relative h-28 overflow-hidden bg-gray-200">
+                    {opp.image ? (
+                      <img
+                        src={opp.image}
+                        alt={title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-unibridge-blue to-blue-600">
+                        <span className="text-white text-2xl font-bold">{title.charAt(0)}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="text-sm font-bold text-unibridge-navy line-clamp-2">{title}</h3>
+                    <p className="mt-2 text-xs text-gray-600 line-clamp-3 leading-relaxed">
+                      {brief || 'Tap to view details.'}
+                    </p>
+                    <div className="mt-3 text-xs font-semibold text-unibridge-blue inline-flex items-center gap-2">
+                      View
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-xs text-gray-500">Swipe left/right to browse quickly.</p>
+          {/* Volunteer Action Buttons (moved here from above) */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-center my-8">
+            <a
+              href="#organizations"
+              className="inline-flex items-center justify-center px-5 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-unibridge-navy font-semibold hover:bg-gray-100 transition"
             >
-              <div className="relative h-28 sm:h-32 overflow-hidden bg-gray-200">
-                {opp.image ? (
-                  <img
-                    src={opp.image}
-                    alt={opp.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-unibridge-blue to-blue-600">
-                    <span className="text-white text-2xl font-bold">
-                      {opp.title.charAt(0)}
+              Explore partners
+            </a>
+            <Link
+              to="/contact"
+              className="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-unibridge-blue text-white font-semibold hover:bg-unibridge-navy transition"
+            >
+              Volunteer / Get involved
+            </Link>
+          </div>
+        </div>
+
+        {/* Desktop: clean grid */}
+        <div className="hidden lg:grid lg:grid-cols-3 gap-6">
+          {opportunities.map((opp) => {
+            const title = (opp.title || 'Opportunity').toString();
+            const brief = (opp.brief || opp.description || '').toString();
+            return (
+              <Link
+                key={opp.id}
+                to={`/opportunity/${opp.id}`}
+                className="group rounded-3xl bg-white border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow"
+              >
+                <div className="relative h-44 sm:h-48 overflow-hidden bg-gray-200">
+                  {opp.image ? (
+                    <img
+                      src={opp.image}
+                      alt={title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-unibridge-blue to-blue-600">
+                      <span className="text-white text-4xl font-bold">{title.charAt(0)}</span>
+                    </div>
+                  )}
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+                  <div className="absolute left-4 bottom-4 right-4">
+                    <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-unibridge-navy">
+                      Verified opportunity
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-unibridge-navy group-hover:text-unibridge-blue transition-colors">
+                    {title}
+                  </h3>
+
+                  {brief ? (
+                    <p className="mt-3 text-gray-600 leading-relaxed line-clamp-3">
+                      {brief}
+                    </p>
+                  ) : (
+                    <p className="mt-3 text-gray-500 leading-relaxed">
+                      Details coming soon. Click to view the full opportunity.
+                    </p>
+                  )}
+
+                  <div className="mt-6 flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Learn more</span>
+                    <span className="inline-flex items-center gap-2 text-unibridge-blue font-semibold">
+                      View
+                      <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </span>
                   </div>
-                )}
-              </div>
-              <div className="p-2 sm:p-2.5">
-                <h3 className="text-sm sm:text-base font-bold text-unibridge-navy mb-1 group-hover:text-unibridge-blue transition-colors">
-                  {opp.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 leading-snug mb-1">
-                  {opp.brief}
-                </p>
-                <div className="text-unibridge-blue font-semibold text-xs flex items-center gap-2">
-                  Learn More
-                  <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>

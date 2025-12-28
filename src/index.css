@@ -14,8 +14,35 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Clean, reference-like typography: serif headings, sans body */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+}
+
 html {
   scroll-behavior: smooth;
+}
+
+@layer components {
+  .ub-container {
+    @apply max-w-6xl mx-auto px-4 sm:px-6;
+  }
+
+  .ub-section {
+    @apply bg-white py-14 sm:py-16;
+  }
+
+  .ub-section-muted {
+    @apply bg-gray-50 py-14 sm:py-16;
+  }
+
+  .ub-section-title {
+    @apply text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-unibridge-navy leading-tight;
+  }
+
+  .ub-section-lead {
+    @apply mt-4 text-gray-600 text-base sm:text-lg leading-relaxed;
+  }
 }
 
 /* Custom scrollbar */

@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { organizationService } from '../utils/storage';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 const OrganizationsPage = () => {
   const [organizations, setOrganizations] = useState([]);
+  const location = useLocation();
 
   useEffect(() => {
     const fetchOrganizations = async () => {
@@ -14,6 +15,19 @@ const OrganizationsPage = () => {
     };
     fetchOrganizations();
   }, []);
+
+  const query = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return (params.get('q') || '').trim().toLowerCase();
+  }, [location.search]);
+
+  const filtered = useMemo(() => {
+    if (!query) return organizations;
+    return organizations.filter((org) => {
+      const haystack = `${org.name || ''} ${org.description || ''}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [organizations, query]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -29,15 +43,25 @@ const OrganizationsPage = () => {
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Verified organizations we're proud to support
             </p>
+
+            {query && (
+              <p className="mt-5 text-sm text-gray-500">
+                Showing results for <span className="font-semibold text-unibridge-navy">“{query}”</span>
+              </p>
+            )}
           </div>
 
-          {organizations.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-gray-400 text-lg">No partner organizations yet.</p>
+              <p className="text-gray-400 text-lg">
+                {organizations.length === 0
+                  ? 'No partner organizations yet.'
+                  : 'No organizations match that search.'}
+              </p>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {organizations.map((org) => (
+              {filtered.map((org) => (
                 <Link
                   key={org.id}
                   to={`/organization/${org.id}`}
