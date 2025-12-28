@@ -18,7 +18,7 @@ const Organizations = () => {
       <section id="organizations" className="bg-gray-50 px-2 py-8 sm:px-4 sm:py-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-unibridge-navy mb-4">Our Partner Organizations</h2>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-unibridge-navy mb-4">Our Partner Organizations</h2>
             <div className="w-20 h-1 bg-unibridge-blue mx-auto mb-6"></div>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Verified partners we trust and work with. Once partners are added, they’ll appear here.
@@ -54,11 +54,9 @@ const Organizations = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
           <div className="text-center md:text-left">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-unibridge-navy">Our Partner Organizations</h2>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-unibridge-navy">Our Partner Organizations</h2>
             <div className="mt-4 w-20 h-1 bg-unibridge-blue mx-auto md:mx-0"></div>
-            <p className="mt-5 text-gray-600 text-base sm:text-lg max-w-3xl mx-auto md:mx-0">
-              Organizations that have been verified through our process. Explore their mission, work, and impact.
-            </p>
+           
           </div>
 
           {/* Buttons moved to Home.jsx below Organizations section */}
@@ -103,7 +101,6 @@ const Organizations = () => {
               </Link>
             ))}
           </div>
-          <p className="mt-2 text-xs text-gray-500">Swipe to browse partners.</p>
         </div>
 
         {/* Desktop: clean grid */}
@@ -119,7 +116,7 @@ const Organizations = () => {
                   <img
                     src={org.profileImage}
                     alt={org.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-unibridge-blue to-blue-600">
@@ -145,7 +142,7 @@ const Organizations = () => {
                   <span className="text-sm text-gray-500">View profile</span>
                   <span className="inline-flex items-center gap-2 text-unibridge-blue font-semibold">
                     Explore
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </span>
@@ -166,21 +163,6 @@ const Organizations = () => {
           </div>
         )}
       </div>
-        {/* Partner Action Buttons (moved here from Home.jsx) */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-center my-8">
-          <a
-            href="/organizations"
-            className="inline-flex items-center justify-center px-4 py-2 rounded-2xl bg-unibridge-blue text-white font-semibold hover:bg-unibridge-navy transition"
-          >
-            View all organizations
-          </a>
-          <a
-            href="/contact"
-            className="inline-flex items-center justify-center px-4 py-2 rounded-2xl border border-gray-200 bg-white text-unibridge-navy font-semibold hover:bg-gray-100 transition"
-          >
-            Become a partner
-          </a>
-        </div>
     </section>
   );
 };

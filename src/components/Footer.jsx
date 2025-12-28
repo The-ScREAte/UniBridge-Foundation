@@ -29,13 +29,13 @@ const Footer = () => {
                 href={donationUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-white text-unibridge-navy font-semibold hover:bg-blue-50 transition"
+                className="inline-flex items-center justify-center px-6 py-3 sm:px-7 sm:py-3.5 text-base font-semibold bg-white text-unibridge-navy border-2 border-white rounded-md hover:bg-unibridge-navy hover:text-white hover:border-unibridge-navy transition-colors duration-300"
               >
                 Donate
               </a>
               <Link
                 to="/contact"
-                className="inline-flex items-center justify-center px-5 py-3 rounded-xl border border-white/30 bg-white/10 text-white font-semibold hover:bg-white/15 transition"
+                className="inline-flex items-center justify-center px-6 py-3 sm:px-7 sm:py-3.5 text-base font-semibold text-white border-2 border-white rounded-md hover:bg-white hover:text-unibridge-navy transition-colors duration-300"
               >
                 Partner with us
               </Link>
@@ -49,6 +49,7 @@ const Footer = () => {
                 <li><Link to="/" className="hover:text-white transition">Home</Link></li>
                 <li><Link to="/about" className="hover:text-white transition">About</Link></li>
                 <li><Link to="/organizations" className="hover:text-white transition">Organizations</Link></li>
+                <li><Link to="/faq" className="hover:text-white transition">FAQ</Link></li>
                 <li><Link to="/contact" className="hover:text-white transition">Contact</Link></li>
               </ul>
             </div>

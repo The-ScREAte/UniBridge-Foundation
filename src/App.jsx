@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import AboutPage from './pages/AboutPage';
 import OrganizationsPage from './pages/OrganizationsPage';
 import ContactPage from './pages/ContactPage';
+import FAQPage from './pages/FAQPage';
 import OrganizationDetail from './pages/OrganizationDetail';
 import OpportunityDetail from './pages/OpportunityDetail';
 import AdminLogin from './pages/AdminLogin';
@@ -23,6 +24,7 @@ function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/organizations" element={<OrganizationsPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/faq" element={<FAQPage />} />
         <Route path="/organization/:id" element={<OrganizationDetail />} />
         <Route path="/opportunity/:id" element={<OpportunityDetail />} />
         <Route path="/admin" element={<AdminLogin />} />

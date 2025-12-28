@@ -12,7 +12,10 @@ export default {
       },
       fontFamily: {
         'sans': ['Inter', 'system-ui', 'sans-serif'],
-        'serif': ['Libre Baskerville', 'Georgia', 'Times New Roman', 'serif'],
+        'serif': ['Playfair Display', 'Georgia', 'Times New Roman', 'serif'],
+        'display': ['Playfair Display', 'Georgia', 'serif'],
+        'script': ['Dancing Script', 'cursive'],
+        'body-serif': ['Crimson Text', 'Georgia', 'serif'],
       },
     },
   },

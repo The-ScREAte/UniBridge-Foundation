@@ -16,7 +16,20 @@ body {
 
 /* Clean, reference-like typography: serif headings, sans body */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+}
+
+/* Elegant italic serif for emphasis */
+em, .text-emphasis {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* Script font for special taglines */
+.text-script {
+  font-family: 'Dancing Script', cursive;
+  font-weight: 500;
 }
 
 html {
@@ -29,11 +42,11 @@ html {
   }
 
   .ub-section {
-    @apply bg-white py-14 sm:py-16;
+    @apply bg-white py-5;
   }
 
   .ub-section-muted {
-    @apply bg-gray-50 py-14 sm:py-16;
+    @apply bg-gray-50 py-10 sm:py-14 md:py-16;
   }
 
   .ub-section-title {

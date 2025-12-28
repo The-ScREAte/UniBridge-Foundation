@@ -20,15 +20,12 @@ const Opportunities = ({ className = '' }) => {
   return (
     <section id="opportunities" className={`ub-section ${className}`.trim()}>
       <div className="ub-container">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10 pt-5">
           <div className="text-center md:text-left">
             <h2 className="ub-section-title">
               Volunteering Needs & Service Opportunities
             </h2>
             <div className="mt-4 w-20 h-1 bg-unibridge-blue mx-auto md:mx-0"></div>
-            <p className="mt-5 text-gray-600 text-base sm:text-lg max-w-3xl mx-auto md:mx-0">
-              Verified opportunities from partner organizations. Browse and learn what support is needed right now.
-            </p>
           </div>
         </div>
 
@@ -73,22 +70,6 @@ const Opportunities = ({ className = '' }) => {
               );
             })}
           </div>
-          <p className="mt-2 text-xs text-gray-500">Swipe left/right to browse quickly.</p>
-          {/* Volunteer Action Buttons (moved here from above) */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-center my-8">
-            <a
-              href="#organizations"
-              className="inline-flex items-center justify-center px-5 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-unibridge-navy font-semibold hover:bg-gray-100 transition"
-            >
-              Explore partners
-            </a>
-            <Link
-              to="/contact"
-              className="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-unibridge-blue text-white font-semibold hover:bg-unibridge-navy transition"
-            >
-              Volunteer / Get involved
-            </Link>
-          </div>
         </div>
 
         {/* Desktop: clean grid */}
@@ -104,11 +85,11 @@ const Opportunities = ({ className = '' }) => {
               >
                 <div className="relative h-44 sm:h-48 overflow-hidden bg-gray-200">
                   {opp.image ? (
-                    <img
-                      src={opp.image}
-                      alt={title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                      <img
+                        src={opp.image}
+                        alt={title}
+                        className="w-full h-full object-cover"
+                      />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-unibridge-blue to-blue-600">
                       <span className="text-white text-4xl font-bold">{title.charAt(0)}</span>
@@ -142,7 +123,7 @@ const Opportunities = ({ className = '' }) => {
                     <span className="text-sm text-gray-500">Learn more</span>
                     <span className="inline-flex items-center gap-2 text-unibridge-blue font-semibold">
                       View
-                      <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </span>
