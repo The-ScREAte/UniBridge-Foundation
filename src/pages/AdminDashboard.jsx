@@ -1083,8 +1083,8 @@ const AdminDashboard = () => {
 
       {/* Add/Edit Organization Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-none sm:rounded-2xl max-w-2xl w-full min-h-screen sm:min-h-0 sm:max-h-[90vh] sm:my-8 overflow-y-auto">
             <div className="p-6 border-b sticky top-0 bg-white">
               <h3 className="text-2xl font-bold text-unibridge-navy">
                 {editingOrg ? 'Edit Organization' : 'Add New Organization'}
@@ -1174,8 +1174,8 @@ const AdminDashboard = () => {
 
       {/* Add Image Modal */}
       {showImageModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full">
+        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-none sm:rounded-2xl max-w-2xl w-full min-h-screen sm:min-h-0 sm:my-8 max-h-screen sm:max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b">
               <h3 className="text-2xl font-bold text-unibridge-navy">
                 Add Image to {selectedOrgForImage?.name}
@@ -1268,8 +1268,8 @@ const AdminDashboard = () => {
 
       {/* Add/Edit Team Member Modal */}
       {showTeamModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-none sm:rounded-2xl max-w-2xl w-full min-h-screen sm:min-h-0 sm:max-h-[90vh] sm:my-8 overflow-y-auto">
             <div className="p-6 border-b sticky top-0 bg-white">
               <h3 className="text-2xl font-bold text-unibridge-navy">
                 {editingMember ? 'Edit Team Member' : 'Add Team Member'}
@@ -1359,8 +1359,8 @@ const AdminDashboard = () => {
 
       {/* Add/Edit Opportunity Modal */}
       {showOpportunityModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-none sm:rounded-2xl max-w-3xl w-full min-h-screen sm:min-h-0 sm:max-h-[90vh] sm:my-8 overflow-y-auto">
             <div className="p-6 border-b sticky top-0 bg-white">
               <h3 className="text-2xl font-bold text-unibridge-navy">
                 {editingOpportunity ? 'Edit Opportunity' : 'Add New Opportunity'}
