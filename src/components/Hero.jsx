@@ -21,7 +21,7 @@ const Hero = () => {
   return (
     <section
       className="relative text-white px-0 mb-0 lg:mb-0 min-h-[70svh] sm:min-h-[65vh] lg:min-h-[75vh] flex items-start pb-12 sm:pb-16"
-      style={{ background: 'none', paddingTop: 'calc(env(safe-area-inset-top) + 6rem)' }}
+      style={{ background: 'none', paddingTop: 'calc(env(safe-area-inset-top) + 11rem)' }}
     >
       <div className="absolute inset-0 w-full h-full z-0">
         {heroContent.use_video && heroContent.background_video ? (
