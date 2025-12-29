@@ -46,7 +46,7 @@ const Opportunities = ({ className = '' }) => {
           <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
             {opportunities.map((opp) => {
               const title = (opp.title || 'Opportunity').toString();
-              const brief = (opp.brief || opp.description || '').toString();
+              const brief = (opp.brief || opp.details || '').toString();
               return (
                 <Link
                   key={opp.id}
@@ -88,7 +88,7 @@ const Opportunities = ({ className = '' }) => {
         <div className="hidden lg:grid lg:grid-cols-3 gap-6">
           {opportunities.map((opp) => {
             const title = (opp.title || 'Opportunity').toString();
-            const brief = (opp.brief || opp.description || '').toString();
+            const brief = (opp.brief || opp.details || '').toString();
             return (
               <Link
                 key={opp.id}

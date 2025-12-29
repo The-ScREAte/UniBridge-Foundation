@@ -41,8 +41,12 @@ const AdminDashboard = () => {
     name: '',
     description: '',
     profileImage: '',
-    partnerSince: new Date().getFullYear().toString()
+    partnerSince: new Date().getFullYear().toString(),
+    linkName: '',
+    linkUrl: ''
   });
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [selectedOrgForGallery, setSelectedOrgForGallery] = useState(null);
 
   const [imageForm, setImageForm] = useState({
     images: [], // Changed to support multiple images
@@ -167,7 +171,7 @@ const AdminDashboard = () => {
       return;
     }
 
-    setOrgForm({ name: '', description: '', profileImage: '', partnerSince: new Date().getFullYear().toString() });
+    setOrgForm({ name: '', description: '', profileImage: '', partnerSince: new Date().getFullYear().toString(), linkName: '', linkUrl: '' });
     setShowAddModal(false);
     setEditingOrg(null);
     loadOrganizations();
@@ -179,7 +183,9 @@ const AdminDashboard = () => {
       name: org.name,
       description: org.description,
       profileImage: org.profileImage || '',
-      partnerSince: org.partnerSince || new Date().getFullYear().toString()
+      partnerSince: org.partnerSince || new Date().getFullYear().toString(),
+      linkName: org.linkName || '',
+      linkUrl: org.linkUrl || ''
     });
     setShowAddModal(true);
   };
@@ -661,7 +667,7 @@ const AdminDashboard = () => {
               <button
                 onClick={() => {
                   setEditingOrg(null);
-                  setOrgForm({ name: '', description: '', profileImage: '', partnerSince: new Date().getFullYear().toString() });
+                  setOrgForm({ name: '', description: '', profileImage: '', partnerSince: new Date().getFullYear().toString(), linkName: '', linkUrl: '' });
                   setShowAddModal(true);
                 }}
                 className="w-full sm:w-auto bg-unibridge-blue text-white px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg hover:bg-unibridge-navy transition-colors font-semibold flex items-center justify-center gap-2"
@@ -734,32 +740,41 @@ const AdminDashboard = () => {
                           </div>
 
                           {org.gallery && org.gallery.length > 0 && (
-                            <div className="grid grid-cols-4 gap-2">
-                              {org.gallery.slice(0, 4).map(image => (
-                                <div key={image.id} className="relative group">
-                                  <img
-                                    src={image.url}
-                                    alt={image.description}
-                                    className="w-full h-20 object-cover rounded"
-                                  />
-                                  <button
-                                    onClick={() => handleDeleteImage(org.id, image.id)}
-                                    className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                  </button>
-                                  <div className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                                    {image.year}
+                            <div className="space-y-2">
+                              <button
+                                onClick={() => { setSelectedOrgForGallery(org); }}
+                                className="text-sm text-unibridge-blue font-medium"
+                              >
+                                View & Manage All {org.gallery.length} Images →
+                              </button>
+                              <div className="grid grid-cols-4 gap-2">
+                                {org.gallery.slice(0, 4).map(image => (
+                                  <div key={image.id} className="relative group">
+                                    <img
+                                      src={image.url}
+                                      alt={image.description}
+                                      onClick={() => setLightboxImage(image.url)}
+                                      className="w-full h-20 object-cover rounded cursor-pointer"
+                                    />
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); handleDeleteImage(org.id, image.id); }}
+                                      className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                    <div className="absolute bottom-1 left-1 right-1 bg-black/70 text-white text-xs px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                      {image.year}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
-                              {org.gallery.length > 4 && (
-                                <div className="w-full h-20 bg-gray-200 rounded flex items-center justify-center text-gray-600 text-sm">
-                                  +{org.gallery.length - 4} more
-                                </div>
-                              )}
+                                ))}
+                                {org.gallery.length > 4 && (
+                                  <div className="w-full h-20 bg-gray-200 rounded flex items-center justify-center text-gray-600 text-sm">
+                                    +{org.gallery.length - 4} more
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -772,9 +787,9 @@ const AdminDashboard = () => {
           </>
         )}
 
-    {/* Team Members Tab */}
-    {activeTab === 'team' && (
-      <>
+        {/* Team Members Tab */}
+        {activeTab === 'team' && (
+          <>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
               <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy">Team Members</h2>
               <button
@@ -1148,6 +1163,34 @@ const AdminDashboard = () => {
                   placeholder="e.g., 2024"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Link Name (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="linkName"
+                  value={orgForm.linkName}
+                  onChange={handleOrgFormChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-unibridge-blue focus:border-transparent outline-none"
+                  placeholder="e.g., Visit Website"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Link URL (Optional)
+                </label>
+                <input
+                  type="url"
+                  name="linkUrl"
+                  value={orgForm.linkUrl}
+                  onChange={handleOrgFormChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-unibridge-blue focus:border-transparent outline-none"
+                  placeholder="https://example.com"
+                />
+              </div>
             </div>
 
             <div className="p-6 border-t flex justify-end gap-4 sticky bottom-0 bg-white">
@@ -1155,7 +1198,7 @@ const AdminDashboard = () => {
                 onClick={() => {
                   setShowAddModal(false);
                   setEditingOrg(null);
-                  setOrgForm({ name: '', description: '', profileImage: '', partnerSince: new Date().getFullYear().toString() });
+                  setOrgForm({ name: '', description: '', profileImage: '', partnerSince: new Date().getFullYear().toString(), linkName: '', linkUrl: '' });
                 }}
                 className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
@@ -1766,6 +1809,93 @@ const AdminDashboard = () => {
               >
                 Save Intro Video
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Lightbox Modal */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 text-white text-4xl font-bold hover:text-gray-300"
+          >
+            &times;
+          </button>
+          <img 
+            src={lightboxImage} 
+            alt="Full size" 
+            className="max-w-full max-h-[90vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      {/* Gallery Manager Modal */}
+      {selectedOrgForGallery && (
+        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-none sm:rounded-2xl max-w-4xl w-full min-h-screen sm:min-h-0 sm:my-8 overflow-y-auto">
+            <div className="p-6 border-b sticky top-0 bg-white z-10">
+              <div className="flex justify-between items-center">
+                <h3 className="text-2xl font-bold text-unibridge-navy">
+                  Manage Gallery - {selectedOrgForGallery.name}
+                </h3>
+                <button
+                  onClick={() => setSelectedOrgForGallery(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              {selectedOrgForGallery.gallery && selectedOrgForGallery.gallery.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {selectedOrgForGallery.gallery.map((image, index) => (
+                    <div key={image.id} className="relative group">
+                      <img
+                        src={image.url}
+                        alt={image.description || `Image ${index + 1}`}
+                        onClick={() => setLightboxImage(image.url)}
+                        className="w-full h-32 object-cover rounded cursor-pointer"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => setLightboxImage(image.url)}
+                          className="bg-white text-gray-800 p-2 rounded-full hover:bg-gray-100"
+                          title="View"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteImage(selectedOrgForGallery.id, image.id); }}
+                          className="bg-red-600 text-white p-2 rounded-full hover:bg-red-700"
+                          title="Delete"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                      <div className="mt-1 text-xs text-gray-500 text-center">
+                        {image.year || 'No year'} • {image.description || 'No description'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-12">No images in gallery yet.</p>
+              )}
             </div>
           </div>
         </div>

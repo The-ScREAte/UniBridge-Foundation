@@ -62,11 +62,21 @@ export const organizationService = {
       return cached;
     }
     
-    const { data, error } = await supabase
+    // Try selecting optional link fields if present; fall back if schema doesn't have them.
+    let data;
+    let error;
+    ({ data, error } = await supabase
       .from('organizations')
-      .select('id, name, description, profile_image, partner_since, created_at, updated_at')
-      .order('created_at', { ascending: false });
-    
+      .select('id, name, description, profile_image, partner_since, link_name, link_url, gallery, created_at, updated_at')
+      .order('created_at', { ascending: false }));
+
+    if (error && typeof error.message === 'string' && /column .*link_(name|url).* does not exist/i.test(error.message)) {
+      ({ data, error } = await supabase
+        .from('organizations')
+        .select('id, name, description, profile_image, partner_since, gallery, created_at, updated_at')
+        .order('created_at', { ascending: false }));
+    }
+
     if (error) {
       console.error('Error fetching organizations:', error);
       return [];
@@ -79,7 +89,9 @@ export const organizationService = {
       description: org.description,
       profileImage: org.profile_image,
       partnerSince: org.partner_since,
-      gallery: org.gallery,
+      linkName: org.link_name,
+      linkUrl: org.link_url,
+      gallery: org.gallery || [],
       createdAt: org.created_at,
       updatedAt: org.updated_at
     }));
@@ -109,6 +121,8 @@ export const organizationService = {
       description: data.description,
       profileImage: data.profile_image,
       partnerSince: data.partner_since,
+      linkName: data.link_name,
+      linkUrl: data.link_url,
       gallery: data.gallery,
       createdAt: data.created_at,
       updatedAt: data.updated_at
@@ -123,16 +137,29 @@ export const organizationService = {
       description: orgData.description,
       profile_image: orgData.profileImage || orgData.profile_image,
       partner_since: orgData.partnerSince || orgData.partner_since,
+      link_name: orgData.linkName || orgData.link_name || null,
+      link_url: orgData.linkUrl || orgData.link_url || null,
       gallery: orgData.gallery || [],
       created_at: new Date().toISOString()
     };
     
-    const { data, error } = await supabase
+    let data;
+    let error;
+    ({ data, error } = await supabase
       .from('organizations')
       .insert([newOrg])
       .select()
-      .single();
-    
+      .single());
+
+    if (error && typeof error.message === 'string' && /column .*link_(name|url).* does not exist/i.test(error.message)) {
+      const { link_name, link_url, ...newOrgWithoutLinks } = newOrg;
+      ({ data, error } = await supabase
+        .from('organizations')
+        .insert([newOrgWithoutLinks])
+        .select()
+        .single());
+    }
+
     if (error) {
       console.error('Error adding organization:', error);
       return null;
@@ -167,15 +194,32 @@ export const organizationService = {
     if (updatedData.profile_image !== undefined) updatePayload.profile_image = updatedData.profile_image;
     if (updatedData.partnerSince !== undefined) updatePayload.partner_since = updatedData.partnerSince;
     if (updatedData.partner_since !== undefined) updatePayload.partner_since = updatedData.partner_since;
+    if (updatedData.linkName !== undefined) updatePayload.link_name = updatedData.linkName;
+    if (updatedData.link_name !== undefined) updatePayload.link_name = updatedData.link_name;
+    if (updatedData.linkUrl !== undefined) updatePayload.link_url = updatedData.linkUrl;
+    if (updatedData.link_url !== undefined) updatePayload.link_url = updatedData.link_url;
     if (updatedData.gallery !== undefined) updatePayload.gallery = updatedData.gallery;
     
-    const { data, error } = await supabase
+    let data;
+    let error;
+    ({ data, error } = await supabase
       .from('organizations')
       .update(updatePayload)
       .eq('id', id)
       .select()
-      .single();
-    
+      .single());
+
+    if (error && typeof error.message === 'string' && /column .*link_(name|url).* does not exist/i.test(error.message)) {
+      // Retry without link fields if the DB schema doesn't include them.
+      const { link_name, link_url, ...updatePayloadWithoutLinks } = updatePayload;
+      ({ data, error } = await supabase
+        .from('organizations')
+        .update(updatePayloadWithoutLinks)
+        .eq('id', id)
+        .select()
+        .single());
+    }
+
     if (error) {
       console.error('Error updating organization:', error);
       return null;
@@ -192,6 +236,8 @@ export const organizationService = {
       description: data.description,
       profileImage: data.profile_image,
       partnerSince: data.partner_since,
+      linkName: data.link_name,
+      linkUrl: data.link_url,
       gallery: data.gallery,
       createdAt: data.created_at,
       updatedAt: data.updated_at
@@ -446,7 +492,7 @@ export const opportunityService = {
     
     const { data, error } = await supabase
       .from('opportunities')
-      .select('id, title, brief, description, image, organization_id, created_at, updated_at')
+      .select('id, title, brief, details, image, location, duration, requirements, status, created_at, updated_at')
       .order('created_at', { ascending: false });
     
     if (error) {

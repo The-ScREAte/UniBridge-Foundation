@@ -10,6 +10,9 @@ const OrganizationDetail = () => {
   const [organization, setOrganization] = useState(null);
   const [selectedYear, setSelectedYear] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [lightboxAlt, setLightboxAlt] = useState('');
+  const [lightboxDescription, setLightboxDescription] = useState('');
 
   useEffect(() => {
     const fetchOrganization = async () => {
@@ -23,6 +26,17 @@ const OrganizationDetail = () => {
     };
     fetchOrganization();
   }, [id, navigate]);
+
+  useEffect(() => {
+    if (!lightboxImage) return;
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setLightboxImage(null);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [lightboxImage]);
 
   if (loading) {
     return (
@@ -58,6 +72,12 @@ const OrganizationDetail = () => {
       groupedByYear[img.year].push(img);
     });
   }
+
+  const openLightbox = (image) => {
+    setLightboxImage(image.url);
+    setLightboxAlt(image.description || 'Gallery image');
+    setLightboxDescription(image.description || '');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -160,22 +180,23 @@ const OrganizationDetail = () => {
                         {groupedByYear[year].map(image => (
                           <div 
                             key={image.id}
-                            className="group relative bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300"
+                            className="relative bg-white rounded-xl shadow-lg overflow-hidden"
                           >
                             <div className="relative h-64 overflow-hidden bg-gray-200">
                               <img
                                 src={image.url}
                                 alt={image.description || 'Gallery image'}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                className="w-full h-full object-cover cursor-pointer"
+                                onClick={() => openLightbox(image)}
                               />
-                              {image.description && (
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-                                  <p className="text-white p-4 text-sm leading-relaxed">
-                                    {image.description}
-                                  </p>
-                                </div>
-                              )}
                             </div>
+                            {image.description && (
+                              <div className="p-4">
+                                <p className="text-gray-700 text-sm leading-relaxed">
+                                  {image.description}
+                                </p>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -187,22 +208,23 @@ const OrganizationDetail = () => {
                   {filteredGallery.map(image => (
                     <div 
                       key={image.id}
-                      className="group relative bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300"
+                      className="relative bg-white rounded-xl shadow-lg overflow-hidden"
                     >
                       <div className="relative h-64 overflow-hidden bg-gray-200">
                         <img
                           src={image.url}
                           alt={image.description || 'Gallery image'}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          className="w-full h-full object-cover cursor-pointer"
+                          onClick={() => openLightbox(image)}
                         />
-                        {image.description && (
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-                            <p className="text-white p-4 text-sm leading-relaxed">
-                              {image.description}
-                            </p>
-                          </div>
-                        )}
                       </div>
+                      {image.description && (
+                        <div className="p-4">
+                          <p className="text-gray-700 text-sm leading-relaxed">
+                            {image.description}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -215,6 +237,40 @@ const OrganizationDetail = () => {
           )}
         </div>
       </div>
+
+      {/* Gallery Lightbox */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 text-white text-4xl font-bold hover:text-gray-300"
+            aria-label="Close image preview"
+          >
+            &times;
+          </button>
+          <div
+            className="max-w-[95vw] max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={lightboxImage}
+              alt={lightboxAlt}
+              className="max-w-full max-h-[80vh] object-contain"
+            />
+            {lightboxDescription && (
+              <div className="mt-4">
+                <p className="text-white text-sm leading-relaxed">
+                  {lightboxDescription}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

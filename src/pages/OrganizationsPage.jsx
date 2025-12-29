@@ -65,14 +65,14 @@ const OrganizationsPage = () => {
                 <Link
                   key={org.id}
                   to={`/organization/${org.id}`}
-                  className="group bg-white rounded-xl overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                  className="bg-white rounded-xl overflow-hidden shadow"
                 >
                   <div className="relative h-64 overflow-hidden bg-gray-200">
                     {org.profileImage ? (
                       <img
                         src={org.profileImage}
                         alt={org.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-unibridge-blue to-blue-600">
@@ -90,11 +90,27 @@ const OrganizationsPage = () => {
                     <p className="text-gray-600 line-clamp-2 leading-relaxed mb-4">
                       {org.description}
                     </p>
-                    {org.partnerSince && (
-                      <p className="text-sm text-gray-500 mb-3">
-                        Partner since {org.partnerSince}
-                      </p>
-                    )}
+                    <div className="flex items-center gap-3 mb-3">
+                      {org.partnerSince && (
+                        <p className="text-sm text-gray-500">
+                          Partner since {org.partnerSince}
+                        </p>
+                      )}
+                      {org.linkUrl && org.linkName && (
+                        <>
+                          <span className="text-gray-400">•</span>
+                          <a
+                            href={org.linkUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-sm text-unibridge-blue font-medium"
+                          >
+                            {org.linkName}
+                          </a>
+                        </>
+                      )}
+                    </div>
                     <div className="text-unibridge-blue font-medium text-sm">
                       View Impact →
                     </div>

@@ -19,7 +19,10 @@ const Hero = () => {
   }, []);
 
   return (
-    <section className="relative text-white pb-0 px-0 mb-0 lg:mb-0 min-h-[55vh] sm:min-h-[65vh] lg:min-h-[75vh] flex items-center" style={{ background: 'none' }}>
+    <section
+      className="relative text-white px-0 mb-0 lg:mb-0 min-h-[70svh] sm:min-h-[65vh] lg:min-h-[75vh] flex items-start pb-12 sm:pb-16"
+      style={{ background: 'none', paddingTop: 'calc(env(safe-area-inset-top) + 6rem)' }}
+    >
       <div className="absolute inset-0 w-full h-full z-0">
         {heroContent.use_video && heroContent.background_video ? (
           <>
@@ -29,7 +32,6 @@ const Hero = () => {
               muted 
               playsInline
               className="w-full h-full object-cover object-center"
-              style={{ minHeight: 300, maxHeight: 600, width: '100%' }}
             >
               <source src={heroContent.background_video} type="video/mp4" />
             </video>
@@ -41,7 +43,6 @@ const Hero = () => {
               src={heroContent.background_image || '/hero.png'} 
               alt="UniBridge Hero" 
               className="w-full h-full object-cover object-center" 
-              style={{ minHeight: 300, maxHeight: 600, width: '100%' }}
             />
             <div className="absolute left-0 right-0 top-0 bottom-0 pointer-events-none" style={{ zIndex: 1, background: 'linear-gradient(to bottom, rgba(30,58,95,0.8) 0%, rgba(37,99,168,0.6) 80%, transparent 100%)' }} />
           </>
