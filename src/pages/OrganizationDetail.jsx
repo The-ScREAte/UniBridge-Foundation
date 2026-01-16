@@ -186,7 +186,7 @@ const OrganizationDetail = () => {
                       <h3 className="text-2xl font-bold text-unibridge-navy mb-6 border-b-2 border-unibridge-blue pb-2">
                         {year}
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
                         {groupedByYear[year].map(image => (
                           <div 
                             key={image.id}

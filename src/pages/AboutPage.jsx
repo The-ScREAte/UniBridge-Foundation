@@ -23,6 +23,7 @@ const AboutPage = () => {
     whatWeDo: 'We find, verify, and channel help to the right people and organizations. Our rigorous vetting process ensures that every donation, every resource, and every bit of support reaches verified recipients who truly need it.',
     volunteerExperience: 'While on the mission of helping, volunteers who join us will also experience safari trips during their service. We believe in creating meaningful connections not just with the communities we serve, but also with the beautiful environments we work in.'
   });
+  const [activeTeamMember, setActiveTeamMember] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,7 +52,7 @@ const AboutPage = () => {
         {/* Mission Section */}
         <div className="max-w-4xl mx-auto mb-24">
           <div className="text-center mb-12">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-unibridge-navy mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-unibridge-navy mb-4">
               About UniBridge
             </h1>
             <div className="w-20 h-1 bg-unibridge-blue mx-auto"></div>
@@ -106,41 +107,75 @@ const AboutPage = () => {
               <p className="text-gray-500">Team members will be added soon.</p>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-10 max-w-5xl mx-auto">
               {teamMembers.map((member) => (
-                <div key={member.id} className="text-center">
-                  <div className="mb-6">
+                <button
+                  key={member.id}
+                  type="button"
+                  onClick={() => setActiveTeamMember(member)}
+                  className="text-center group focus:outline-none basis-1/3 flex-shrink-0"
+                >
+                  <div className="mb-4 sm:mb-6">
                     {member.image ? (
                       <img
                         src={member.image}
                         alt={member.name}
-                        className="w-48 h-48 rounded-full mx-auto object-cover shadow-lg"
+                        className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full mx-auto object-cover shadow-lg"
                       />
                     ) : (
-                      <div className="w-48 h-48 rounded-full mx-auto bg-gradient-to-br from-unibridge-blue to-blue-600 flex items-center justify-center shadow-lg">
-                        <span className="text-white text-5xl font-bold">
+                      <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 rounded-full mx-auto bg-gradient-to-br from-unibridge-blue to-blue-600 flex items-center justify-center shadow-lg">
+                        <span className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold">
                           {member.name.charAt(0)}
                         </span>
                       </div>
                     )}
                   </div>
-                  <h3 className="text-2xl font-bold text-unibridge-navy mb-2">
+                  <h3 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-unibridge-navy mb-1">
                     {member.name}
                   </h3>
-                  <p className="text-unibridge-blue font-semibold mb-3">
+                  <p className="text-unibridge-blue font-semibold text-xs sm:text-sm md:text-base">
                     {member.role}
                   </p>
                   {member.bio && (
-                    <p className="text-gray-600 leading-relaxed">
-                      {member.bio}
-                    </p>
+                    <p className="mt-2 text-xs sm:text-sm text-gray-500">Tap to view bio</p>
                   )}
-                </div>
+                </button>
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {activeTeamMember && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 pt-6" onClick={() => setActiveTeamMember(null)}>
+          <div
+            className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-2xl font-bold text-unibridge-navy">{activeTeamMember.name}</h3>
+                <p className="text-unibridge-blue font-semibold">{activeTeamMember.role}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTeamMember(null)}
+                className="text-gray-500 hover:text-gray-700"
+                aria-label="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {activeTeamMember.bio ? (
+              <p className="mt-4 text-gray-700 leading-relaxed">{activeTeamMember.bio}</p>
+            ) : (
+              <p className="mt-4 text-gray-500">No bio available.</p>
+            )}
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

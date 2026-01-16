@@ -89,14 +89,14 @@ const Organizations = () => {
           {/* Buttons moved to Home.jsx below Organizations section */}
         </div>
 
-        {/* Mobile: swipeable row */}
+        {/* Mobile: swipeable two-row grid */}
         <div className="lg:hidden">
-          <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
+          <div className="grid grid-rows-2 grid-flow-col auto-cols-[minmax(220px,1fr)] sm:auto-cols-[minmax(260px,1fr)] gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
             {featured.map((org) => (
               <Link
                 key={org.id}
                 to={`/organization/${org.id}`}
-                className="snap-start shrink-0 w-[280px] sm:w-[320px] rounded-3xl bg-white border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+                className="snap-start rounded-3xl bg-white border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
               >
                 <div className="relative h-40 overflow-hidden bg-gray-200">
                   {org.profileImage ? (

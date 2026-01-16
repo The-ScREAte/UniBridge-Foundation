@@ -58,7 +58,7 @@ const OpportunityDetail = () => {
               </svg>
               Back to Opportunities
             </Link>
-            <h1 className="text-5xl md:text-6xl font-bold text-unibridge-navy mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-unibridge-navy mb-6">
               {opportunity.title}
             </h1>
             <div className="w-20 h-1 bg-unibridge-blue"></div>
