@@ -67,13 +67,16 @@ export const organizationService = {
     let error;
     ({ data, error } = await supabase
       .from('organizations')
-      .select('id, name, description, profile_image, partner_since, link_name, link_url, gallery, created_at, updated_at')
+      .select('id, name, description, profile_image, partner_since, link_name, link_url, gallery, display_order, created_at, updated_at')
+      .order('display_order', { ascending: true })
       .order('created_at', { ascending: false }));
 
-    if (error && typeof error.message === 'string' && /column .*link_(name|url).* does not exist/i.test(error.message)) {
+    // Broadly detect missing link columns (Supabase may say schema cache instead of "does not exist")
+    if (error && typeof error.message === 'string' && /link_(name|url)/i.test(error.message)) {
       ({ data, error } = await supabase
         .from('organizations')
-        .select('id, name, description, profile_image, partner_since, gallery, created_at, updated_at')
+        .select('id, name, description, profile_image, partner_since, gallery, display_order, created_at, updated_at')
+        .order('display_order', { ascending: true })
         .order('created_at', { ascending: false }));
     }
 
@@ -91,8 +94,7 @@ export const organizationService = {
       partnerSince: org.partner_since,
       linkName: org.link_name,
       linkUrl: org.link_url,
-      gallery: org.gallery || [],
-      createdAt: org.created_at,
+      gallery: org.gallery || [],      displayOrder: org.display_order,      createdAt: org.created_at,
       updatedAt: org.updated_at
     }));
     
@@ -137,32 +139,21 @@ export const organizationService = {
       description: orgData.description,
       profile_image: orgData.profileImage || orgData.profile_image,
       partner_since: orgData.partnerSince || orgData.partner_since,
-      link_name: orgData.linkName || orgData.link_name || null,
-      link_url: orgData.linkUrl || orgData.link_url || null,
+      link_name: orgData.linkName || orgData.link_name,
+      link_url: orgData.linkUrl || orgData.link_url,
       gallery: orgData.gallery || [],
       created_at: new Date().toISOString()
     };
     
-    let data;
-    let error;
-    ({ data, error } = await supabase
+    const { data, error } = await supabase
       .from('organizations')
       .insert([newOrg])
       .select()
-      .single());
-
-    if (error && typeof error.message === 'string' && /column .*link_(name|url).* does not exist/i.test(error.message)) {
-      const { link_name, link_url, ...newOrgWithoutLinks } = newOrg;
-      ({ data, error } = await supabase
-        .from('organizations')
-        .insert([newOrgWithoutLinks])
-        .select()
-        .single());
-    }
+      .single();
 
     if (error) {
       console.error('Error adding organization:', error);
-      return null;
+      throw new Error(error.message || 'Failed to add organization');
     }
     
     // Clear cache after adding
@@ -175,6 +166,8 @@ export const organizationService = {
       description: data.description,
       profileImage: data.profile_image,
       partnerSince: data.partner_since,
+      linkName: data.link_name,
+      linkUrl: data.link_url,
       gallery: data.gallery,
       createdAt: data.created_at,
       updatedAt: data.updated_at
@@ -199,49 +192,42 @@ export const organizationService = {
     if (updatedData.linkUrl !== undefined) updatePayload.link_url = updatedData.linkUrl;
     if (updatedData.link_url !== undefined) updatePayload.link_url = updatedData.link_url;
     if (updatedData.gallery !== undefined) updatePayload.gallery = updatedData.gallery;
+
+    if (Array.isArray(updatePayload.gallery)) {
+      const normalizedGallery = [];
+      for (const image of updatePayload.gallery) {
+        if (image && typeof image.url === 'string' && image.url.startsWith('data:image')) {
+          const upload = await imageUtils.uploadDataUrl(image.url, 'organization-images');
+          if (upload.success) {
+            normalizedGallery.push({
+              ...image,
+              url: upload.url,
+              path: upload.path
+            });
+            continue;
+          }
+        }
+        normalizedGallery.push(image);
+      }
+      updatePayload.gallery = normalizedGallery;
+    }
     
-    let data;
-    let error;
-    ({ data, error } = await supabase
+    const { data, error } = await supabase
       .from('organizations')
       .update(updatePayload)
-      .eq('id', id)
-      .select()
-      .single());
-
-    if (error && typeof error.message === 'string' && /column .*link_(name|url).* does not exist/i.test(error.message)) {
-      // Retry without link fields if the DB schema doesn't include them.
-      const { link_name, link_url, ...updatePayloadWithoutLinks } = updatePayload;
-      ({ data, error } = await supabase
-        .from('organizations')
-        .update(updatePayloadWithoutLinks)
-        .eq('id', id)
-        .select()
-        .single());
-    }
+      .eq('id', id);
 
     if (error) {
       console.error('Error updating organization:', error);
-      return null;
+      throw new Error(error.message || 'Failed to update organization');
     }
     
     // Clear cache after updating
     cacheManager.clear('all_organizations');
     cacheManager.clear(`organization_${id}`);
     
-    // Transform snake_case back to camelCase for frontend
-    return data ? {
-      id: data.id,
-      name: data.name,
-      description: data.description,
-      profileImage: data.profile_image,
-      partnerSince: data.partner_since,
-      linkName: data.link_name,
-      linkUrl: data.link_url,
-      gallery: data.gallery,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    } : null;
+    // Return a simplified response to avoid re-fetching large data
+    return { id, ...updatedData };
   },
 
   // Delete organization
@@ -287,11 +273,44 @@ export const organizationService = {
     const gallery = org.gallery.filter(img => img.id !== imageId);
     const updated = await organizationService.updateOrganization(orgId, { gallery });
     return updated !== null;
+  },
+
+  // Update display order for multiple organizations
+  updateDisplayOrder: async (organizations) => {
+    try {
+      const updates = organizations.map((org, index) => 
+        supabase
+          .from('organizations')
+          .update({ display_order: index })
+          .eq('id', org.id)
+      );
+      
+      await Promise.all(updates);
+      cacheManager.clear('all_organizations');
+      return true;
+    } catch (error) {
+      console.error('Error updating display order:', error);
+      return false;
+    }
   }
 };
 
 // Image utilities for handling image uploads to Supabase Storage
 export const imageUtils = {
+  // Convert data URL to File
+  dataUrlToFile: async (dataUrl, fileName = 'image') => {
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    return new File([blob], fileName, { type: blob.type });
+  },
+
+  // Upload data URL to Supabase Storage
+  uploadDataUrl: async (dataUrl, bucket = 'organization-images') => {
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+    const file = await imageUtils.dataUrlToFile(dataUrl, `${fileName}.png`);
+    return imageUtils.uploadImage(file, bucket);
+  },
+
   // Upload image to Supabase Storage
   uploadImage: async (file, bucket = 'organization-images') => {
     const fileExt = file.name.split('.').pop();
@@ -362,6 +381,7 @@ export const teamService = {
     const { data, error } = await supabase
       .from('team_members')
       .select('*')
+      .order('display_order', { ascending: true })
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -414,6 +434,24 @@ export const teamService = {
       return false;
     }
     return true;
+  },
+
+  // Update display order for multiple team members
+  updateDisplayOrder: async (members) => {
+    try {
+      const updates = members.map((member, index) => 
+        supabase
+          .from('team_members')
+          .update({ display_order: index })
+          .eq('id', member.id)
+      );
+      
+      await Promise.all(updates);
+      return true;
+    } catch (error) {
+      console.error('Error updating display order:', error);
+      return false;
+    }
   }
 };
 

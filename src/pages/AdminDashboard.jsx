@@ -71,6 +71,12 @@ const AdminDashboard = () => {
     requirements: ''
   });
 
+  const [draggedOrgIndex, setDraggedOrgIndex] = useState(null);
+  const [draggedTeamIndex, setDraggedTeamIndex] = useState(null);
+  const [editingImage, setEditingImage] = useState(null);
+  const [editingImageOrg, setEditingImageOrg] = useState(null);
+  const [showEditImageModal, setShowEditImageModal] = useState(false);
+
   useEffect(() => {
     if (!authService.isAuthenticated()) {
       navigate('/admin');
@@ -167,7 +173,8 @@ const AdminDashboard = () => {
         await organizationService.addOrganization({ ...orgForm, gallery: [] });
       }
     } catch (e) {
-      alert('Failed to save organization: ' + (e && e.message ? e.message : 'Unknown error'));
+      const msg = e && e.message ? e.message : 'Unknown error';
+      alert('Failed to save organization: ' + msg + '\nIf using an older DB schema, run the latest SQL or drop link fields.');
       return;
     }
 
@@ -197,6 +204,56 @@ const AdminDashboard = () => {
     }
   };
 
+  // Drag and drop handlers for organizations
+  const handleOrgDragStart = (index) => {
+    setDraggedOrgIndex(index);
+  };
+
+  const handleOrgDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedOrgIndex === null || draggedOrgIndex === index) return;
+
+    const newOrganizations = [...organizations];
+    const draggedItem = newOrganizations[draggedOrgIndex];
+    newOrganizations.splice(draggedOrgIndex, 1);
+    newOrganizations.splice(index, 0, draggedItem);
+
+    setOrganizations(newOrganizations);
+    setDraggedOrgIndex(index);
+  };
+
+  const handleOrgDragEnd = async () => {
+    if (draggedOrgIndex !== null) {
+      await organizationService.updateDisplayOrder(organizations);
+      setDraggedOrgIndex(null);
+    }
+  };
+
+  // Drag and drop handlers for team members
+  const handleTeamDragStart = (index) => {
+    setDraggedTeamIndex(index);
+  };
+
+  const handleTeamDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedTeamIndex === null || draggedTeamIndex === index) return;
+
+    const newTeamMembers = [...teamMembers];
+    const draggedItem = newTeamMembers[draggedTeamIndex];
+    newTeamMembers.splice(draggedTeamIndex, 1);
+    newTeamMembers.splice(index, 0, draggedItem);
+
+    setTeamMembers(newTeamMembers);
+    setDraggedTeamIndex(index);
+  };
+
+  const handleTeamDragEnd = async () => {
+    if (draggedTeamIndex !== null) {
+      await teamService.updateDisplayOrder(teamMembers);
+      setDraggedTeamIndex(null);
+    }
+  };
+
   const handleAddImage = (org) => {
     setSelectedOrgForImage(org);
     setImageForm({
@@ -219,7 +276,7 @@ const AdminDashboard = () => {
     if (files.length === 0) return;
 
     const validatedImages = [];
-    
+
     for (const file of files) {
       const validation = imageUtils.validateImageFile(file);
       if (!validation.valid) {
@@ -228,16 +285,21 @@ const AdminDashboard = () => {
       }
 
       try {
-        const base64 = await imageUtils.fileToBase64(file);
+        const upload = await imageUtils.uploadImage(file, 'organization-images');
+        if (!upload.success) {
+          alert(`${file.name}: ${upload.error}`);
+          continue;
+        }
         validatedImages.push({
-          url: base64,
+          url: upload.url,
+          path: upload.path,
           name: file.name
         });
       } catch (error) {
         alert(`Error uploading ${file.name}`);
       }
     }
-    
+
     setImageForm({ ...imageForm, images: validatedImages });
   };
 
@@ -251,6 +313,7 @@ const AdminDashboard = () => {
     for (const image of imageForm.images) {
       await organizationService.addImageToOrganization(selectedOrgForImage.id, {
         url: image.url,
+        path: image.path,
         description: imageForm.description,
         year: imageForm.year
       });
@@ -266,6 +329,55 @@ const AdminDashboard = () => {
     if (window.confirm('Are you sure you want to delete this image?')) {
       await organizationService.removeImageFromOrganization(orgId, imageId);
       loadOrganizations();
+    }
+  };
+
+  const handleEditImage = (org, image) => {
+    setEditingImageOrg(org);
+    setEditingImage({
+      id: image.id,
+      description: image.description || '',
+      year: image.year || new Date().getFullYear().toString()
+    });
+    setShowEditImageModal(true);
+  };
+
+  const handleSaveEditedImage = async () => {
+    if (!editingImage.year) {
+      alert('Please specify a year');
+      return;
+    }
+
+    try {
+      // Get fresh data
+      const org = await organizationService.getOrganizationById(editingImageOrg.id);
+      if (!org || !org.gallery) return;
+
+      // Update only the specific image in the gallery
+      const updatedGallery = org.gallery.map(img => 
+        img.id === editingImage.id 
+          ? { ...img, description: editingImage.description, year: editingImage.year }
+          : img
+      );
+
+      // Use the update function
+      await organizationService.updateOrganization(editingImageOrg.id, { gallery: updatedGallery });
+      
+      setShowEditImageModal(false);
+      setEditingImage(null);
+      setEditingImageOrg(null);
+      
+      // Reload to get fresh data
+      await loadOrganizations();
+      
+      // Refresh gallery view if still open
+      if (selectedOrgForGallery && selectedOrgForGallery.id === editingImageOrg.id) {
+        const refreshedOrg = await organizationService.getOrganizationById(editingImageOrg.id);
+        setSelectedOrgForGallery(refreshedOrg);
+      }
+    } catch (error) {
+      console.error('Error saving image:', error);
+      alert('Failed to save image changes. Please try again.');
     }
   };
 
@@ -663,7 +775,10 @@ const AdminDashboard = () => {
         {activeTab === 'organizations' && (
           <>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy">Organizations</h2>
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy">Organizations</h2>
+                <p className="text-sm text-gray-500 mt-1">Drag and drop to reorder</p>
+              </div>
               <button
                 onClick={() => {
                   setEditingOrg(null);
@@ -686,10 +801,17 @@ const AdminDashboard = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                {organizations.map(org => (
-                  <div key={org.id} className="bg-white rounded-xl shadow-md overflow-hidden">
+                {organizations.map((org, index) => (
+                  <div 
+                    key={org.id} 
+                    className="bg-white rounded-xl shadow-md overflow-hidden cursor-move hover:shadow-lg transition-shadow"
+                    draggable
+                    onDragStart={() => handleOrgDragStart(index)}
+                    onDragOver={(e) => handleOrgDragOver(e, index)}
+                    onDragEnd={handleOrgDragEnd}
+                  >
                     <div className="md:flex">
-                      <div className="md:w-48 h-48">
+                      <div className="md:w-48 h-48 pointer-events-none">
                         {org.profileImage ? (
                           <img src={org.profileImage} alt={org.name} className="w-full h-full object-cover" />
                         ) : (
@@ -791,7 +913,10 @@ const AdminDashboard = () => {
         {activeTab === 'team' && (
           <>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
-              <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy">Team Members</h2>
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy">Team Members</h2>
+                <p className="text-sm text-gray-500 mt-1">Drag and drop to reorder</p>
+              </div>
               <button
                 onClick={() => {
                   setEditingMember(null);
@@ -813,10 +938,20 @@ const AdminDashboard = () => {
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-6">
-                {teamMembers.map(member => (
-                  <div key={member.id} className="bg-white rounded-xl shadow-md overflow-hidden">
+                {teamMembers.map((member, index) => (
+                  <div 
+                    key={member.id} 
+                    className="bg-white rounded-xl shadow-md overflow-hidden cursor-move hover:shadow-lg transition-shadow"
+                    draggable
+                    onDragStart={() => handleTeamDragStart(index)}
+                    onDragOver={(e) => handleTeamDragOver(e, index)}
+                    onDragEnd={handleTeamDragEnd}
+                  >
                     <div className="flex items-center p-6">
-                      <div className="flex-shrink-0 mr-6">
+                      <svg className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                      <div className="flex-shrink-0 mr-6 pointer-events-none">
                         {member.image ? (
                           <img src={member.image} alt={member.name} className="w-24 h-24 rounded-full object-cover" />
                         ) : (
@@ -1844,14 +1979,28 @@ const AdminDashboard = () => {
                 <h3 className="text-2xl font-bold text-unibridge-navy">
                   Manage Gallery - {selectedOrgForGallery.name}
                 </h3>
-                <button
-                  onClick={() => setSelectedOrgForGallery(null)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      handleAddImage(selectedOrgForGallery);
+                      setSelectedOrgForGallery(null);
+                    }}
+                    className="px-4 py-2 bg-unibridge-blue text-white rounded-lg hover:bg-unibridge-navy transition-colors flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add More Images
+                  </button>
+                  <button
+                    onClick={() => setSelectedOrgForGallery(null)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
             
@@ -1878,6 +2027,15 @@ const AdminDashboard = () => {
                           </svg>
                         </button>
                         <button
+                          onClick={(e) => { e.stopPropagation(); handleEditImage(selectedOrgForGallery, image); }}
+                          className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700"
+                          title="Edit"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
                           onClick={(e) => { e.stopPropagation(); handleDeleteImage(selectedOrgForGallery.id, image.id); }}
                           className="bg-red-600 text-white p-2 rounded-full hover:bg-red-700"
                           title="Delete"
@@ -1896,6 +2054,66 @@ const AdminDashboard = () => {
               ) : (
                 <p className="text-center text-gray-500 py-12">No images in gallery yet.</p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Image Modal */}
+      {showEditImageModal && editingImage && (
+        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-none sm:rounded-2xl max-w-2xl w-full min-h-screen sm:min-h-0 sm:my-8 max-h-screen sm:max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b">
+              <h3 className="text-2xl font-bold text-unibridge-navy">
+                Edit Image Details
+              </h3>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Year *
+                </label>
+                <input
+                  type="text"
+                  value={editingImage.year}
+                  onChange={(e) => setEditingImage({ ...editingImage, year: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-unibridge-blue focus:border-transparent outline-none"
+                  placeholder="e.g., 2024"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={editingImage.description}
+                  onChange={(e) => setEditingImage({ ...editingImage, description: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-unibridge-blue focus:border-transparent outline-none resize-none"
+                  placeholder="Enter image description"
+                ></textarea>
+              </div>
+            </div>
+
+            <div className="p-6 border-t flex justify-end gap-4">
+              <button
+                onClick={() => {
+                  setShowEditImageModal(false);
+                  setEditingImage(null);
+                  setEditingImageOrg(null);
+                }}
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEditedImage}
+                className="px-6 py-2 bg-unibridge-blue text-white rounded-lg hover:bg-unibridge-navy transition-colors"
+              >
+                Save Changes
+              </button>
             </div>
           </div>
         </div>

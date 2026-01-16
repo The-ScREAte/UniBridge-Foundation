@@ -126,6 +126,16 @@ const OrganizationDetail = () => {
                     Partner since {organization.partnerSince}
                   </p>
                 )}
+                {organization.linkUrl && organization.linkName && (
+                  <a
+                    href={organization.linkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block mt-6 px-6 py-3 bg-unibridge-blue text-white font-semibold rounded-lg hover:bg-unibridge-navy transition-colors shadow-md hover:shadow-lg"
+                  >
+                    {organization.linkName}
+                  </a>
+                )}
               </div>
             </div>
           </div>

@@ -57,19 +57,19 @@ const Footer = () => {
             <div>
               <h4 className="text-sm font-semibold tracking-wide uppercase text-blue-50">Get Involved</h4>
               <ul className="mt-4 space-y-3 text-blue-50/90">
-                <li><Link to="/" className="hover:text-white transition">Volunteer</Link></li>
-                <li><Link to="/" className="hover:text-white transition">Open Opportunities</Link></li>
-                <li><Link to="/" className="hover:text-white transition">Start a Partnership</Link></li>
+                <li><Link to="/#opportunities" className="hover:text-white transition">Volunteer</Link></li>
+                <li><Link to="/#opportunities" className="hover:text-white transition">Open Opportunities</Link></li>
+                <li><Link to="/contact" className="hover:text-white transition">Start a Partnership</Link></li>
               </ul>
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold tracking-wide uppercase text-blue-50">Transparency</h4>
+              <h4 className="text-sm font-semibold tracking-wide uppercase text-blue-50">Resources</h4>
               <ul className="mt-4 space-y-3 text-blue-50/90">
-                <li><Link to="/" className="hover:text-white transition">How we verify</Link></li>
-                <li><Link to="/" className="hover:text-white transition">Where funds go</Link></li>
-                <li><Link to="/" className="hover:text-white transition">Annual updates</Link></li>
-                <li><Link to="/" className="hover:text-white transition">Policies</Link></li>
+                <li><Link to="/faq" className="hover:text-white transition">FAQ</Link></li>
+                <li><Link to="/about" className="hover:text-white transition">Our Mission</Link></li>
+                <li><Link to="/organizations" className="hover:text-white transition">All Partners</Link></li>
+                <li><Link to="/contact" className="hover:text-white transition">Get in Touch</Link></li>
               </ul>
             </div>
 

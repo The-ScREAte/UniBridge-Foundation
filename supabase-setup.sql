@@ -10,12 +10,21 @@ CREATE TABLE IF NOT EXISTS organizations (
   description TEXT NOT NULL,
   profile_image TEXT,
   partner_since TEXT,
+  link_name TEXT,
+  link_url TEXT,
   gallery JSONB DEFAULT '[]'::jsonb,
+  display_order INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
+
+-- Recreate policies safely if script is rerun
+DROP POLICY IF EXISTS "Public can view organizations" ON organizations;
+DROP POLICY IF EXISTS "Anyone can insert organizations" ON organizations;
+DROP POLICY IF EXISTS "Anyone can update organizations" ON organizations;
+DROP POLICY IF EXISTS "Anyone can delete organizations" ON organizations;
 
 CREATE POLICY "Public can view organizations" ON organizations FOR SELECT USING (true);
 CREATE POLICY "Anyone can insert organizations" ON organizations FOR INSERT WITH CHECK (true);
@@ -33,11 +42,17 @@ CREATE TABLE IF NOT EXISTS team_members (
   role TEXT NOT NULL,
   image TEXT,
   bio TEXT,
+  display_order INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public can view team members" ON team_members;
+DROP POLICY IF EXISTS "Anyone can insert team members" ON team_members;
+DROP POLICY IF EXISTS "Anyone can update team members" ON team_members;
+DROP POLICY IF EXISTS "Anyone can delete team members" ON team_members;
 
 CREATE POLICY "Public can view team members" ON team_members FOR SELECT USING (true);
 CREATE POLICY "Anyone can insert team members" ON team_members FOR INSERT WITH CHECK (true);
@@ -58,6 +73,11 @@ CREATE TABLE IF NOT EXISTS contact_messages (
 );
 
 ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can insert messages" ON contact_messages;
+DROP POLICY IF EXISTS "Anyone can view messages" ON contact_messages;
+DROP POLICY IF EXISTS "Anyone can update messages" ON contact_messages;
+DROP POLICY IF EXISTS "Anyone can delete messages" ON contact_messages;
 
 CREATE POLICY "Anyone can insert messages" ON contact_messages FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can view messages" ON contact_messages FOR SELECT USING (true);
@@ -86,6 +106,11 @@ CREATE TABLE IF NOT EXISTS opportunities (
 
 ALTER TABLE opportunities ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public can view opportunities" ON opportunities;
+DROP POLICY IF EXISTS "Anyone can insert opportunities" ON opportunities;
+DROP POLICY IF EXISTS "Anyone can update opportunities" ON opportunities;
+DROP POLICY IF EXISTS "Anyone can delete opportunities" ON opportunities;
+
 CREATE POLICY "Public can view opportunities" ON opportunities FOR SELECT USING (true);
 CREATE POLICY "Anyone can insert opportunities" ON opportunities FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can update opportunities" ON opportunities FOR UPDATE USING (true) WITH CHECK (true);
@@ -107,6 +132,10 @@ CREATE TABLE IF NOT EXISTS about_content (
 );
 
 ALTER TABLE about_content ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public can view about content" ON about_content;
+DROP POLICY IF EXISTS "Anyone can insert about content" ON about_content;
+DROP POLICY IF EXISTS "Anyone can update about content" ON about_content;
 
 CREATE POLICY "Public can view about content" ON about_content FOR SELECT USING (true);
 CREATE POLICY "Anyone can insert about content" ON about_content FOR INSERT WITH CHECK (true);
@@ -135,6 +164,10 @@ CREATE TABLE IF NOT EXISTS hero_content (
 
 ALTER TABLE hero_content ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Public can view hero content" ON hero_content;
+DROP POLICY IF EXISTS "Anyone can insert hero content" ON hero_content;
+DROP POLICY IF EXISTS "Anyone can update hero content" ON hero_content;
+
 CREATE POLICY "Public can view hero content" ON hero_content FOR SELECT USING (true);
 CREATE POLICY "Anyone can insert hero content" ON hero_content FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can update hero content" ON hero_content FOR UPDATE USING (true) WITH CHECK (true);
@@ -148,7 +181,30 @@ VALUES (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- ============================================
--- 7. STORAGE BUCKETS
+-- 7. INTRO VIDEO TABLE (Single Row Config)
+-- ============================================
+CREATE TABLE IF NOT EXISTS intro_video (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  video_url TEXT,
+  poster_url TEXT,
+  title TEXT,
+  description TEXT,
+  is_active BOOLEAN DEFAULT true,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE intro_video ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public can view intro video" ON intro_video;
+DROP POLICY IF EXISTS "Anyone can insert intro video" ON intro_video;
+DROP POLICY IF EXISTS "Anyone can update intro video" ON intro_video;
+
+CREATE POLICY "Public can view intro video" ON intro_video FOR SELECT USING (true);
+CREATE POLICY "Anyone can insert intro video" ON intro_video FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can update intro video" ON intro_video FOR UPDATE USING (true) WITH CHECK (true);
+
+-- ============================================
+-- 8. STORAGE BUCKETS
 -- ============================================
 -- Run these commands in Supabase Storage UI or via SQL:
 
@@ -177,6 +233,11 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 
 -- Organization images policies
+DROP POLICY IF EXISTS "Public can view organization images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can upload organization images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can update organization images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can delete organization images" ON storage.objects;
+
 CREATE POLICY "Public can view organization images"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'organization-images');
@@ -194,6 +255,10 @@ ON storage.objects FOR DELETE
 USING (bucket_id = 'organization-images');
 
 -- Team images policies
+DROP POLICY IF EXISTS "Public can view team images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can upload team images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can delete team images" ON storage.objects;
+
 CREATE POLICY "Public can view team images"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'team-images');
@@ -207,6 +272,10 @@ ON storage.objects FOR DELETE
 USING (bucket_id = 'team-images');
 
 -- Opportunity images policies
+DROP POLICY IF EXISTS "Public can view opportunity images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can upload opportunity images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can delete opportunity images" ON storage.objects;
+
 CREATE POLICY "Public can view opportunity images"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'opportunity-images');
@@ -220,6 +289,10 @@ ON storage.objects FOR DELETE
 USING (bucket_id = 'opportunity-images');
 
 -- Hero media policies
+DROP POLICY IF EXISTS "Public can view hero media" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can upload hero media" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can delete hero media" ON storage.objects;
+
 CREATE POLICY "Public can view hero media"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'hero-media');

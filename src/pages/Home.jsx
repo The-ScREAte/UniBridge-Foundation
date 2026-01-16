@@ -35,7 +35,9 @@ const Home = () => {
         {/* Partners */}
         <Organizations />
         {/* Partner Action Buttons now rendered by Organizations section */}
-        <Opportunities />
+        <div id="opportunities">
+          <Opportunities />
+        </div>
         <About />
         {/* Video and Donation CTA */}
         <section>
