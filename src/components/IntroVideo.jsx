@@ -1,79 +1,59 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { introVideoService } from '../utils/storage';
 
-const IntroVideo = () => {
+const IntroVideo = ({ className = 'lg:col-span-7', onStatusChange }) => {
   const [videoContent, setVideoContent] = useState({
-    video_url: '/unibridge-intro.mp4',
-    poster_url: '/video-poster.jpg',
-    title: 'UniBridge Introduction',
-    is_active: true
+    video_url: null,
+    is_active: false
   });
   const [isVisible, setIsVisible] = useState(false);
-  const videoRef = useRef(null);
 
   useEffect(() => {
     const fetchVideo = async () => {
       const content = await introVideoService.getIntroVideo();
       setVideoContent(content);
+      setIsVisible(true);
     };
     fetchVideo();
   }, []);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '100px' }
-    );
-
-    if (videoRef.current) {
-      observer.observe(videoRef.current);
+    if (typeof onStatusChange === 'function') {
+      const hasVideo = Boolean(videoContent?.is_active && videoContent?.video_url);
+      onStatusChange(hasVideo);
     }
-
-    return () => observer.disconnect();
-  }, []);
+  }, [videoContent, onStatusChange]);
 
   if (!videoContent.is_active || !videoContent.video_url) {
     return null;
   }
 
   return (
-    <section ref={videoRef}>
-      <div className="ub-container max-w-5xl">
-        <div className="rounded-3xl bg-white border border-gray-200 p-2 sm:p-3">
-          <div className="rounded-2xl overflow-hidden bg-black">
-              {isVisible ? (
-                <video
-                  src={videoContent.video_url}
-                  autoPlay
-                  muted
-                  loop
-                  controls
-                  playsInline
-                  preload="metadata"
-                  className="w-full h-[200px] sm:h-[300px] lg:h-[360px]"
-                  poster={videoContent.poster_url}
-                  style={{ objectFit: 'cover', display: 'block', background: '#000' }}
-                >
-                  Sorry, your browser does not support embedded videos.
-                </video>
-              ) : (
-                <div
-                  className="w-full h-[200px] sm:h-[300px] lg:h-[360px] flex items-center justify-center bg-gray-900"
-                  style={{
-                    backgroundImage: videoContent.poster_url ? `url(${videoContent.poster_url})` : 'none',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                >
-                  <div className="text-white text-sm">Loading…</div>
-                </div>
-              )}
-          </div>
+    <section className={className}>
+      <div className="rounded-3xl bg-white border border-gray-200 p-2 sm:p-3">
+        <div className="rounded-2xl overflow-hidden bg-black">
+          {isVisible ? (
+            <video
+              src={videoContent.video_url}
+              autoPlay
+              muted
+              loop
+              controls
+              playsInline
+              preload="auto"
+              className="w-full h-[200px] sm:h-[300px] lg:h-[360px]"
+              style={{ objectFit: 'cover', display: 'block', background: '#000' }}
+            >
+              Sorry, your browser does not support embedded videos.
+            </video>
+          ) : (
+            <div
+              className="w-full h-[200px] sm:h-[300px] lg:h-[360px] flex items-center justify-center bg-gray-900 text-white text-sm"
+              aria-busy="true"
+            >
+              Loading…
+            </div>
+          )}
         </div>
       </div>
     </section>

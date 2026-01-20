@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
@@ -9,6 +9,8 @@ import Opportunities from '../components/Opportunities';
 import Footer from '../components/Footer';
 
 const Home = () => {
+  const [hasIntroVideo, setHasIntroVideo] = useState(false);
+
   return (
     <>
       <div className="min-h-screen bg-white">
@@ -43,10 +45,8 @@ const Home = () => {
         <section>
           <div className="ub-container">
             <div className="grid lg:grid-cols-12 gap-10 items-center">
-              <div className="lg:col-span-7">
-                <IntroVideo />
-              </div>
-              <div className="lg:col-span-5">
+              <IntroVideo className="lg:col-span-7" onStatusChange={setHasIntroVideo} />
+              <div className={hasIntroVideo ? 'lg:col-span-5' : 'lg:col-span-12'}>
                 <h2 className="text-3xl sm:text-4xl font-display font-bold text-unibridge-navy leading-tight">Give with confidence.</h2>
                 <p className="mt-4 text-gray-600 text-lg leading-relaxed">
                   Your donation supports a verified People with clear goals. You'll receive updates—because giving should feel safe,

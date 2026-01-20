@@ -22,11 +22,8 @@ const AdminDashboard = () => {
     use_video: false
   });
   const [introVideo, setIntroVideo] = useState({
-    video_url: '/unibridge-intro.mp4',
-    poster_url: '/video-poster.jpg',
-    title: 'UniBridge Introduction',
-    description: '',
-    is_active: true
+    video_url: null,
+    is_active: false
   });
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingOrg, setEditingOrg] = useState(null);
@@ -635,33 +632,26 @@ const AdminDashboard = () => {
     }
 
     try {
-      const base64 = await imageUtils.fileToBase64(file);
-      setIntroVideo({ ...introVideo, video_url: base64 });
+      const upload = await imageUtils.uploadVideo(file, 'hero-media');
+      if (!upload.success) {
+        alert(upload.error || 'Failed to upload video');
+        return;
+      }
+      setIntroVideo({ ...introVideo, video_url: upload.url, is_active: true });
     } catch (error) {
+      console.error('Video upload error:', error);
       alert('Error uploading video');
     }
   };
 
-  const handleIntroPosterUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const validation = imageUtils.validateImageFile(file);
-    if (!validation.valid) {
-      alert(validation.error);
-      return;
-    }
-
-    try {
-      const base64 = await imageUtils.fileToBase64(file);
-      setIntroVideo({ ...introVideo, poster_url: base64 });
-    } catch (error) {
-      alert('Error uploading poster');
-    }
-  };
-
   const handleSaveIntroVideo = async () => {
-    const result = await introVideoService.updateIntroVideo(introVideo);
+    const payload = {
+      video_url: introVideo.video_url,
+      is_active: Boolean(introVideo.video_url)
+    };
+
+    const result = await introVideoService.updateIntroVideo(payload);
+    setIntroVideo(payload);
     
     if (result) {
       alert('Intro video updated successfully!');
@@ -672,7 +662,14 @@ const AdminDashboard = () => {
 
   const handleDeleteIntroVideo = async () => {
     if (window.confirm('Are you sure you want to delete the intro video?')) {
-      setIntroVideo({ ...introVideo, video_url: null, is_active: false });
+      const payload = { video_url: null, is_active: false };
+      const result = await introVideoService.updateIntroVideo(payload);
+      setIntroVideo(payload);
+      if (result) {
+        alert('Intro video deleted. The section is now hidden on the homepage.');
+      } else {
+        alert('Failed to delete intro video');
+      }
     }
   };
 
@@ -1823,127 +1820,55 @@ const AdminDashboard = () => {
           <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy mb-6 sm:mb-8">Intro Video</h2>
           
           <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
-            {/* Active Toggle */}
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">Display Video on Homepage</label>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={introVideo.is_active}
-                  onChange={(e) => setIntroVideo({ ...introVideo, is_active: e.target.checked })}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-unibridge-blue"></div>
-              </label>
-            </div>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Upload a single intro video (MP4, WebM, or OGG). The file is stored in Supabase Storage (hero-media bucket). When
+                uploaded and saved, it will autoplay on the homepage. If you delete it, the homepage section disappears automatically.
+              </p>
 
-            {/* Title */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Section Title (Optional)</label>
-              <input
-                type="text"
-                value={introVideo.title || ''}
-                onChange={(e) => setIntroVideo({ ...introVideo, title: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-unibridge-blue focus:border-transparent"
-                placeholder="UniBridge Introduction"
-              />
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
-              <textarea
-                value={introVideo.description || ''}
-                onChange={(e) => setIntroVideo({ ...introVideo, description: e.target.value })}
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-unibridge-blue focus:border-transparent"
-                placeholder="Brief description about the video..."
-              />
-            </div>
-
-            {/* Video Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Intro Video</label>
-              {introVideo.video_url && (
-                <div className="mb-4 relative">
-                  <video 
+              {introVideo.video_url ? (
+                <div className="relative">
+                  <video
                     src={introVideo.video_url}
-                    poster={introVideo.poster_url}
                     className="w-full h-64 object-cover rounded-lg"
                     controls
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
                   />
                   <button
                     onClick={handleDeleteIntroVideo}
-                    className="absolute top-2 right-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                    className="absolute top-3 right-3 px-3 py-1.5 bg-red-600 text-white text-sm rounded shadow hover:bg-red-700"
                   >
-                    Delete Video
+                    Delete video
                   </button>
                 </div>
-              )}
-              <input
-                type="file"
-                accept="video/*"
-                onChange={handleIntroVideoUpload}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              />
-              <p className="text-sm text-gray-500 mt-1">Max size: 50MB. Formats: MP4, WebM, OGG</p>
-            </div>
-
-            {/* Poster Upload */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Video Poster/Thumbnail (Optional)</label>
-              {introVideo.poster_url && (
-                <div className="mb-4">
-                  <img 
-                    src={introVideo.poster_url}
-                    alt="Video poster"
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
+              ) : (
+                <div className="border border-dashed border-gray-300 rounded-lg p-6 text-center text-gray-500">
+                  No intro video uploaded yet.
                 </div>
               )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleIntroPosterUpload}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              />
-              <p className="text-sm text-gray-500 mt-1">Displayed before video loads. Recommended: 1280x720px</p>
-            </div>
 
-            {/* Preview */}
-            {introVideo.is_active && introVideo.video_url && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
-                <div className="bg-gray-50 p-8 rounded-lg">
-                  {introVideo.title && (
-                    <div className="text-center mb-6">
-                      <h3 className="text-2xl font-bold text-unibridge-navy mb-2">{introVideo.title}</h3>
-                      <div className="w-12 h-0.5 bg-unibridge-blue mx-auto"></div>
-                    </div>
-                  )}
-                  <div className="rounded-lg overflow-hidden shadow-xl">
-                    <video
-                      src={introVideo.video_url}
-                      poster={introVideo.poster_url}
-                      className="w-full h-48 object-cover"
-                      controls
-                    />
-                  </div>
-                  {introVideo.description && (
-                    <p className="text-center text-gray-600 mt-4">{introVideo.description}</p>
-                  )}
-                </div>
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={handleIntroVideoUpload}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                />
+                <p className="text-sm text-gray-500 mt-1">Max size: 50MB. Formats: MP4, WebM, OGG.</p>
               </div>
-            )}
 
-            {/* Save Button */}
-            <div className="flex justify-end">
-              <button
-                onClick={handleSaveIntroVideo}
-                className="px-6 py-2 bg-unibridge-blue text-white rounded-lg hover:bg-unibridge-navy transition-colors"
-              >
-                Save Intro Video
-              </button>
+              <div className="flex justify-end">
+                <button
+                  onClick={handleSaveIntroVideo}
+                  className="px-6 py-2 bg-unibridge-blue text-white rounded-lg hover:bg-unibridge-navy transition-colors disabled:opacity-60"
+                  disabled={!introVideo.video_url}
+                >
+                  Save intro video
+                </button>
+              </div>
             </div>
           </div>
         </div>

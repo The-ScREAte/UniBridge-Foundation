@@ -334,6 +334,28 @@ export const imageUtils = {
     return { success: true, url: publicUrlData.publicUrl, path: filePath };
   },
 
+  // Upload video (or any file) to Supabase Storage
+  uploadVideo: async (file, bucket = 'hero-media') => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(filePath, file, { contentType: file.type });
+
+    if (error) {
+      console.error('Error uploading video:', error);
+      return { success: false, error: error.message };
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(filePath);
+
+    return { success: true, url: publicUrlData.publicUrl, path: filePath };
+  },
+
   // Delete image from Supabase Storage
   deleteImage: async (filePath, bucket = 'organization-images') => {
     const { error } = await supabase.storage
@@ -758,34 +780,40 @@ export const heroService = {
 export const introVideoService = {
   // Get intro video
   getIntroVideo: async () => {
-    const { data, error } = await supabase
+    const { data, error, status } = await supabase
       .from('intro_video')
       .select('*')
       .eq('is_active', true)
       .limit(1)
-      .single();
-    
-    if (error) {
+      .maybeSingle();
+
+    if (error && status !== 406) {
       console.error('Error fetching intro video:', error);
-      return {
-        video_url: '/unibridge-intro.mp4',
-        poster_url: '/video-poster.jpg',
-        title: 'UniBridge Introduction',
-        is_active: true
-      };
     }
-    return data;
+
+    if (!data) {
+      return { video_url: null, is_active: false };
+    }
+
+    return {
+      video_url: data.video_url || null,
+      is_active: data.is_active === true
+    };
   },
 
   // Update intro video
   updateIntroVideo: async (videoData) => {
-    const { data: existing } = await supabase
+    const { data: existing, error: fetchError, status } = await supabase
       .from('intro_video')
       .select('id')
       .limit(1)
-      .single();
-    
-    if (existing) {
+      .maybeSingle();
+
+    if (fetchError && status !== 406) {
+      console.error('Error checking intro video:', fetchError);
+    }
+
+    if (existing?.id) {
       const { data, error } = await supabase
         .from('intro_video')
         .update({ ...videoData, updated_at: new Date().toISOString() })
@@ -798,18 +826,18 @@ export const introVideoService = {
         return null;
       }
       return data;
-    } else {
-      const { data, error } = await supabase
-        .from('intro_video')
-        .insert([videoData])
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Error creating intro video:', error);
-        return null;
-      }
-      return data;
     }
+
+    const { data, error } = await supabase
+      .from('intro_video')
+      .insert([videoData])
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating intro video:', error);
+      return null;
+    }
+    return data;
   }
 };
