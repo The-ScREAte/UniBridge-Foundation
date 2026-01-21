@@ -70,6 +70,7 @@ const AdminDashboard = () => {
 
   const [draggedOrgIndex, setDraggedOrgIndex] = useState(null);
   const [draggedTeamIndex, setDraggedTeamIndex] = useState(null);
+  const [draggedOpportunityIndex, setDraggedOpportunityIndex] = useState(null);
   const [editingImage, setEditingImage] = useState(null);
   const [editingImageOrg, setEditingImageOrg] = useState(null);
   const [showEditImageModal, setShowEditImageModal] = useState(false);
@@ -248,6 +249,31 @@ const AdminDashboard = () => {
     if (draggedTeamIndex !== null) {
       await teamService.updateDisplayOrder(teamMembers);
       setDraggedTeamIndex(null);
+    }
+  };
+
+  // Drag and drop handlers for opportunities
+  const handleOpportunityDragStart = (index) => {
+    setDraggedOpportunityIndex(index);
+  };
+
+  const handleOpportunityDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedOpportunityIndex === null || draggedOpportunityIndex === index) return;
+
+    const newOpportunities = [...opportunities];
+    const draggedItem = newOpportunities[draggedOpportunityIndex];
+    newOpportunities.splice(draggedOpportunityIndex, 1);
+    newOpportunities.splice(index, 0, draggedItem);
+
+    setOpportunities(newOpportunities);
+    setDraggedOpportunityIndex(index);
+  };
+
+  const handleOpportunityDragEnd = async () => {
+    if (draggedOpportunityIndex !== null) {
+      await opportunityService.updateDisplayOrder(opportunities);
+      setDraggedOpportunityIndex(null);
     }
   };
 
@@ -1026,8 +1052,15 @@ const AdminDashboard = () => {
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-6">
-                {opportunities.map(opp => (
-                  <div key={opp.id} className="bg-white rounded-xl shadow-md overflow-hidden">
+                {opportunities.map((opp, index) => (
+                  <div
+                    key={opp.id}
+                    className="bg-white rounded-xl shadow-md overflow-hidden cursor-move"
+                    draggable
+                    onDragStart={() => handleOpportunityDragStart(index)}
+                    onDragOver={(e) => handleOpportunityDragOver(e, index)}
+                    onDragEnd={handleOpportunityDragEnd}
+                  >
                     <div className="flex">
                       <div className="w-48 flex-shrink-0">
                         {opp.image ? (

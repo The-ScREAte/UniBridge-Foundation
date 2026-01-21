@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { opportunityService } from '../utils/storage';
 
@@ -41,9 +41,9 @@ const Opportunities = ({ className = '' }) => {
           </div>
         </div>
 
-        {/* Mobile: swipeable row (faster browsing) */}
+        {/* Mobile: two-row horizontal scroller so more cards stay visible */}
         <div className="lg:hidden">
-          <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory">
+          <div className="grid grid-rows-2 grid-flow-col auto-cols-[minmax(220px,1fr)] sm:auto-cols-[minmax(260px,1fr)] gap-3 overflow-x-auto pb-4 pr-4 snap-x snap-mandatory">
             {opportunities.map((opp) => {
               const title = (opp.title || 'Opportunity').toString();
               const brief = (opp.brief || opp.details || '').toString();
@@ -51,9 +51,9 @@ const Opportunities = ({ className = '' }) => {
                 <Link
                   key={opp.id}
                   to={`/opportunity/${opp.id}`}
-                  className="snap-start shrink-0 w-[176px] xs:w-[176px] sm:w-[240px] rounded-2xl bg-white border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+                  className="snap-start rounded-2xl bg-white border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
                 >
-                  <div className="relative h-28 overflow-hidden bg-gray-200">
+                  <div className="relative overflow-hidden bg-gray-200 aspect-[4/3]">
                     {opp.image ? (
                       <img
                         src={opp.image}
@@ -95,7 +95,7 @@ const Opportunities = ({ className = '' }) => {
                 to={`/opportunity/${opp.id}`}
                 className="group rounded-3xl bg-white border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow"
               >
-                <div className="relative h-44 sm:h-48 overflow-hidden bg-gray-200">
+                <div className="relative overflow-hidden bg-gray-200 aspect-[16/10]">
                   {opp.image ? (
                       <img
                         src={opp.image}

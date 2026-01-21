@@ -67,7 +67,7 @@ const OrganizationsPage = () => {
                   to={`/organization/${org.id}`}
                   className="bg-white rounded-xl overflow-hidden shadow"
                 >
-                  <div className="relative h-64 overflow-hidden bg-gray-200">
+                  <div className="relative overflow-hidden bg-gray-200 aspect-[4/3]">
                     {org.profileImage ? (
                       <img
                         src={org.profileImage}

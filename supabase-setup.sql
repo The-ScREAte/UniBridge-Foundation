@@ -99,10 +99,14 @@ CREATE TABLE IF NOT EXISTS opportunities (
   location TEXT,
   duration TEXT,
   requirements TEXT,
+  display_order INT DEFAULT 0,
   status TEXT DEFAULT 'active',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Backfill column for existing databases
+ALTER TABLE opportunities ADD COLUMN IF NOT EXISTS display_order INT;
 
 ALTER TABLE opportunities ENABLE ROW LEVEL SECURITY;
 
@@ -117,6 +121,7 @@ CREATE POLICY "Anyone can update opportunities" ON opportunities FOR UPDATE USIN
 CREATE POLICY "Anyone can delete opportunities" ON opportunities FOR DELETE USING (true);
 
 CREATE INDEX IF NOT EXISTS opportunities_status_idx ON opportunities(status);
+CREATE INDEX IF NOT EXISTS opportunities_display_order_idx ON opportunities(display_order);
 CREATE INDEX IF NOT EXISTS opportunities_created_at_idx ON opportunities(created_at DESC);
 
 -- ============================================

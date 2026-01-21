@@ -91,14 +91,14 @@ const Organizations = () => {
 
         {/* Mobile: swipeable two-row grid */}
         <div className="lg:hidden">
-          <div className="grid grid-rows-2 grid-flow-col auto-cols-[minmax(220px,1fr)] sm:auto-cols-[minmax(260px,1fr)] gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
+          <div className="grid grid-rows-2 grid-flow-col auto-cols-[minmax(240px,1fr)] sm:auto-cols-[minmax(280px,1fr)] gap-4 overflow-x-auto pb-4 pr-4 snap-x snap-mandatory">
             {featured.map((org) => (
               <Link
                 key={org.id}
                 to={`/organization/${org.id}`}
                 className="snap-start rounded-3xl bg-white border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="relative h-40 overflow-hidden bg-gray-200">
+                <div className="relative overflow-hidden bg-gray-200 aspect-[4/3]">
                   {org.profileImage ? (
                     <img src={org.profileImage} alt={org.name} className="w-full h-full object-cover" />
                   ) : (
@@ -138,7 +138,7 @@ const Organizations = () => {
               to={`/organization/${org.id}`}
               className="group rounded-3xl bg-white border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow"
             >
-              <div className="relative h-52 overflow-hidden bg-gray-200">
+              <div className="relative overflow-hidden bg-gray-200 aspect-[16/10]">
                 {org.profileImage ? (
                   <img
                     src={org.profileImage}

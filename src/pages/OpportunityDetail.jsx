@@ -70,7 +70,7 @@ const OpportunityDetail = () => {
               <img
                 src={opportunity.image}
                 alt={opportunity.title}
-                className="w-full h-[500px] object-cover"
+                className="w-full max-h-[520px] object-cover sm:object-cover"
               />
             </div>
           )}

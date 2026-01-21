@@ -53,6 +53,23 @@ export const authService = {
 
 // Organization data management
 export const organizationService = {
+  // Normalize organization payload: upload base64 profile images
+  _preparePayload: async (orgData) => {
+    const payload = { ...orgData };
+
+    if (payload.profileImage && typeof payload.profileImage === 'string' && payload.profileImage.startsWith('data:image')) {
+      try {
+        const upload = await imageUtils.uploadDataUrl(payload.profileImage, 'organization-images');
+        if (upload.success) {
+          payload.profileImage = upload.url;
+        }
+      } catch (err) {
+        console.warn('Org image upload failed, keeping inline image:', err);
+      }
+    }
+
+    return payload;
+  },
   // Get all organizations
   getAllOrganizations: async () => {
     // Check cache first
@@ -133,15 +150,17 @@ export const organizationService = {
 
   // Add new organization
   addOrganization: async (orgData) => {
+    const prepared = await organizationService._preparePayload(orgData);
+
     // Transform camelCase to snake_case for database
     const newOrg = {
-      name: orgData.name,
-      description: orgData.description,
-      profile_image: orgData.profileImage || orgData.profile_image,
-      partner_since: orgData.partnerSince || orgData.partner_since,
-      link_name: orgData.linkName || orgData.link_name,
-      link_url: orgData.linkUrl || orgData.link_url,
-      gallery: orgData.gallery || [],
+      name: prepared.name,
+      description: prepared.description,
+      profile_image: prepared.profileImage || prepared.profile_image,
+      partner_since: prepared.partnerSince || prepared.partner_since,
+      link_name: prepared.linkName || prepared.link_name,
+      link_url: prepared.linkUrl || prepared.link_url,
+      gallery: prepared.gallery || [],
       created_at: new Date().toISOString()
     };
     
@@ -176,22 +195,24 @@ export const organizationService = {
 
   // Update organization
   updateOrganization: async (id, updatedData) => {
+    const prepared = await organizationService._preparePayload(updatedData);
+
     // Transform camelCase to snake_case for database
     const updatePayload = {
       updated_at: new Date().toISOString()
     };
     
-    if (updatedData.name !== undefined) updatePayload.name = updatedData.name;
-    if (updatedData.description !== undefined) updatePayload.description = updatedData.description;
-    if (updatedData.profileImage !== undefined) updatePayload.profile_image = updatedData.profileImage;
-    if (updatedData.profile_image !== undefined) updatePayload.profile_image = updatedData.profile_image;
-    if (updatedData.partnerSince !== undefined) updatePayload.partner_since = updatedData.partnerSince;
-    if (updatedData.partner_since !== undefined) updatePayload.partner_since = updatedData.partner_since;
-    if (updatedData.linkName !== undefined) updatePayload.link_name = updatedData.linkName;
-    if (updatedData.link_name !== undefined) updatePayload.link_name = updatedData.link_name;
-    if (updatedData.linkUrl !== undefined) updatePayload.link_url = updatedData.linkUrl;
-    if (updatedData.link_url !== undefined) updatePayload.link_url = updatedData.link_url;
-    if (updatedData.gallery !== undefined) updatePayload.gallery = updatedData.gallery;
+    if (prepared.name !== undefined) updatePayload.name = prepared.name;
+    if (prepared.description !== undefined) updatePayload.description = prepared.description;
+    if (prepared.profileImage !== undefined) updatePayload.profile_image = prepared.profileImage;
+    if (prepared.profile_image !== undefined) updatePayload.profile_image = prepared.profile_image;
+    if (prepared.partnerSince !== undefined) updatePayload.partner_since = prepared.partnerSince;
+    if (prepared.partner_since !== undefined) updatePayload.partner_since = prepared.partner_since;
+    if (prepared.linkName !== undefined) updatePayload.link_name = prepared.linkName;
+    if (prepared.link_name !== undefined) updatePayload.link_name = prepared.link_name;
+    if (prepared.linkUrl !== undefined) updatePayload.link_url = prepared.linkUrl;
+    if (prepared.link_url !== undefined) updatePayload.link_url = prepared.link_url;
+    if (prepared.gallery !== undefined) updatePayload.gallery = prepared.gallery;
 
     if (Array.isArray(updatePayload.gallery)) {
       const normalizedGallery = [];
@@ -398,6 +419,23 @@ export const imageUtils = {
 
 // Team members management
 export const teamService = {
+  // Normalize member payload: upload base64 headshots
+  _preparePayload: async (memberData) => {
+    const payload = { ...memberData };
+
+    if (payload.image && typeof payload.image === 'string' && payload.image.startsWith('data:image')) {
+      try {
+        const upload = await imageUtils.uploadDataUrl(payload.image, 'team-images');
+        if (upload.success) {
+          payload.image = upload.url;
+        }
+      } catch (err) {
+        console.warn('Team image upload failed, keeping inline image:', err);
+      }
+    }
+
+    return payload;
+  },
   // Get all team members
   getAllMembers: async () => {
     const { data, error } = await supabase
@@ -415,9 +453,11 @@ export const teamService = {
 
   // Add team member
   addMember: async (memberData) => {
+    const prepared = await teamService._preparePayload(memberData);
+
     const { data, error } = await supabase
       .from('team_members')
-      .insert([memberData])
+      .insert([prepared])
       .select()
       .single();
     
@@ -430,9 +470,11 @@ export const teamService = {
 
   // Update team member
   updateMember: async (id, updatedData) => {
+    const prepared = await teamService._preparePayload(updatedData);
+
     const { data, error } = await supabase
       .from('team_members')
-      .update({ ...updatedData, updated_at: new Date().toISOString() })
+      .update({ ...prepared, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single();
@@ -541,6 +583,29 @@ export const messageService = {
 
 // Opportunities management
 export const opportunityService = {
+  // Normalize payload (upload base64 images to storage, add defaults)
+  _preparePayload: async (opportunityData) => {
+    const payload = { ...opportunityData };
+
+    // Upload base64 image to storage to avoid oversized row payloads
+    if (payload.image && typeof payload.image === 'string' && payload.image.startsWith('data:image')) {
+      try {
+        const upload = await imageUtils.uploadDataUrl(payload.image, 'opportunity-images');
+        if (upload.success) {
+          payload.image = upload.url;
+        }
+      } catch (err) {
+        console.warn('Image upload failed, keeping inline image:', err);
+      }
+    }
+
+    if (!payload.status) {
+      payload.status = 'active';
+    }
+
+    return payload;
+  },
+
   // Get all opportunities
   getAllOpportunities: async () => {
     // Check cache first
@@ -549,21 +614,38 @@ export const opportunityService = {
     if (cached) {
       return cached;
     }
-    
-    const { data, error } = await supabase
+
+    let data;
+    let error;
+
+    ({ data, error } = await supabase
       .from('opportunities')
-      .select('id, title, brief, details, image, location, duration, requirements, status, created_at, updated_at')
-      .order('created_at', { ascending: false });
-    
+      .select('id, title, brief, details, image, location, duration, requirements, status, display_order, created_at, updated_at')
+      .order('display_order', { ascending: true })
+      .order('created_at', { ascending: false }));
+
+    // Gracefully handle older schemas without display_order
+    if (error && typeof error.message === 'string' && /display_order/i.test(error.message)) {
+      ({ data, error } = await supabase
+        .from('opportunities')
+        .select('id, title, brief, details, image, location, duration, requirements, status, created_at, updated_at')
+        .order('created_at', { ascending: false }));
+    }
+
     if (error) {
       console.error('Error fetching opportunities:', error);
       return [];
     }
-    
+
+    // Normalize display_order so UI can always sort deterministically
+    const normalized = (data || []).map((opp, index) => ({
+      ...opp,
+      display_order: opp.display_order ?? index
+    }));
+
     // Cache the result
-    const result = data || [];
-    cacheManager.set(cacheKey, result);
-    return result;
+    cacheManager.set(cacheKey, normalized);
+    return normalized;
   },
 
   // Get opportunity by ID
@@ -583,9 +665,40 @@ export const opportunityService = {
 
   // Add opportunity
   addOpportunity: async (opportunityData) => {
+    const prepared = await opportunityService._preparePayload(opportunityData);
+
+    let supportsDisplayOrder = true;
+    let nextDisplayOrder = null;
+
+    // Probe for display_order support and compute the next slot
+    try {
+      const { data: orderProbe, error: orderError } = await supabase
+        .from('opportunities')
+        .select('display_order')
+        .order('display_order', { ascending: false })
+        .limit(1);
+
+      if (orderError) {
+        supportsDisplayOrder = false;
+      } else if (Array.isArray(orderProbe) && orderProbe.length > 0) {
+        const currentTop = orderProbe[0].display_order;
+        nextDisplayOrder = (currentTop ?? -1) + 1;
+      } else {
+        nextDisplayOrder = 0;
+      }
+    } catch (probeError) {
+      console.warn('Display order probe failed, falling back to append-only insert:', probeError);
+      supportsDisplayOrder = false;
+    }
+
+    const payload = { ...prepared };
+    if (supportsDisplayOrder && nextDisplayOrder !== null) {
+      payload.display_order = nextDisplayOrder;
+    }
+
     const { data, error } = await supabase
       .from('opportunities')
-      .insert([opportunityData])
+      .insert([payload])
       .select()
       .single();
     
@@ -601,9 +714,19 @@ export const opportunityService = {
 
   // Update opportunity
   updateOpportunity: async (id, updatedData) => {
+    const prepared = await opportunityService._preparePayload(updatedData);
+
+    const payload = {
+      ...prepared,
+      updated_at: new Date().toISOString()
+    };
+
+    if (prepared.displayOrder !== undefined) payload.display_order = prepared.displayOrder;
+    if (prepared.display_order !== undefined) payload.display_order = prepared.display_order;
+
     const { data, error } = await supabase
       .from('opportunities')
-      .update({ ...updatedData, updated_at: new Date().toISOString() })
+      .update(payload)
       .eq('id', id)
       .select()
       .single();
@@ -631,6 +754,25 @@ export const opportunityService = {
       return false;
     }
     return true;
+  },
+
+  // Update display order for multiple opportunities
+  updateDisplayOrder: async (opportunities) => {
+    try {
+      const updates = opportunities.map((opp, index) =>
+        supabase
+          .from('opportunities')
+          .update({ display_order: index })
+          .eq('id', opp.id)
+      );
+
+      await Promise.all(updates);
+      cacheManager.clear('all_opportunities');
+      return true;
+    } catch (error) {
+      console.error('Error updating opportunity display order:', error);
+      return false;
+    }
   }
 };
 
@@ -738,6 +880,34 @@ export const heroService = {
 
   // Update hero content
   updateHeroContent: async (contentData) => {
+    const payload = { ...contentData };
+
+    // Upload base64 background image
+    if (payload.background_image && typeof payload.background_image === 'string' && payload.background_image.startsWith('data:image')) {
+      try {
+        const upload = await imageUtils.uploadDataUrl(payload.background_image, 'hero-media');
+        if (upload.success) {
+          payload.background_image = upload.url;
+          payload.use_video = false;
+        }
+      } catch (err) {
+        console.warn('Hero image upload failed, keeping inline image:', err);
+      }
+    }
+
+    // Upload base64 background video
+    if (payload.background_video && typeof payload.background_video === 'string' && payload.background_video.startsWith('data:video')) {
+      try {
+        const upload = await imageUtils.uploadVideo(await imageUtils.dataUrlToFile(payload.background_video, 'hero-video.mp4'), 'hero-media');
+        if (upload.success) {
+          payload.background_video = upload.url;
+          payload.use_video = true;
+        }
+      } catch (err) {
+        console.warn('Hero video upload failed, keeping inline video:', err);
+      }
+    }
+
     // First, try to get existing content
     const { data: existing } = await supabase
       .from('hero_content')
