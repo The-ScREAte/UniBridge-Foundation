@@ -10,7 +10,7 @@ const Opportunities = ({ className = '' }) => {
     const fetchOpportunities = async () => {
       try {
         setLoading(true);
-        const data = await opportunityService.getAllOpportunities();
+        const data = await opportunityService.getAllOpportunities({ onUpdate: setOpportunities });
         setOpportunities(data);
       } catch (error) {
         console.error('Failed to load opportunities:', error);

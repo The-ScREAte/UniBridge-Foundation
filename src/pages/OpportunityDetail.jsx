@@ -10,7 +10,7 @@ const OpportunityDetail = () => {
 
   useEffect(() => {
     const fetchOpportunity = async () => {
-      const data = await opportunityService.getOpportunityById(id);
+      const data = await opportunityService.getOpportunityById(id, { onUpdate: setOpportunity });
       setOpportunity(data);
     };
     fetchOpportunity();

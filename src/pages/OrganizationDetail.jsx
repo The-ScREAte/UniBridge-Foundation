@@ -16,7 +16,7 @@ const OrganizationDetail = () => {
 
   useEffect(() => {
     const fetchOrganization = async () => {
-      const org = await organizationService.getOrganizationById(id);
+      const org = await organizationService.getOrganizationById(id, { onUpdate: setOrganization });
       if (!org) {
         navigate('/');
         return;

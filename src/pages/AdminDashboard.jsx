@@ -89,7 +89,7 @@ const AdminDashboard = () => {
   }, [navigate]);
 
   const loadOrganizations = async () => {
-    const orgs = await organizationService.getAllOrganizations();
+    const orgs = await organizationService.getAllOrganizations({ onUpdate: setOrganizations });
     setOrganizations(orgs);
   };
 
@@ -114,7 +114,7 @@ const AdminDashboard = () => {
   };
 
   const loadOpportunities = async () => {
-    const saved = await opportunityService.getAllOpportunities();
+    const saved = await opportunityService.getAllOpportunities({ onUpdate: setOpportunities });
     setOpportunities(saved);
   };
 

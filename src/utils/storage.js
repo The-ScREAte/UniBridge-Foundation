@@ -1,5 +1,41 @@
 import { supabase, cacheManager } from './supabaseClient';
 
+// Minimal stale-while-revalidate helper: return cached data immediately and refresh in the background
+const safeStringify = (value) => {
+  try {
+    return JSON.stringify(value);
+  } catch (err) {
+    console.warn('Serialization failed during cache comparison:', err);
+    return null;
+  }
+};
+
+const staleWhileRevalidate = async ({ cacheKey, fetcher, onUpdate }) => {
+  const cached = cacheManager.get(cacheKey);
+  if (cached) {
+    // Background refresh so the UI can be updated if newer data exists
+    Promise.resolve()
+      .then(async () => {
+        const fresh = await fetcher();
+        cacheManager.set(cacheKey, fresh);
+        if (onUpdate) {
+          const freshStr = safeStringify(fresh);
+          const cachedStr = safeStringify(cached);
+          if (freshStr !== cachedStr) {
+            onUpdate(fresh);
+          }
+        }
+      })
+      .catch((err) => console.error('Background refresh failed:', err));
+
+    return cached;
+  }
+
+  const fresh = await fetcher();
+  cacheManager.set(cacheKey, fresh);
+  return fresh;
+};
+
 // Authentication utilities
 export const authService = {
   // Login with username and password
@@ -71,81 +107,102 @@ export const organizationService = {
     return payload;
   },
   // Get all organizations
-  getAllOrganizations: async () => {
-    // Check cache first
+  getAllOrganizations: async (options = {}) => {
     const cacheKey = 'all_organizations';
-    const cached = cacheManager.get(cacheKey);
-    if (cached) {
-      return cached;
-    }
-    
-    // Try selecting optional link fields if present; fall back if schema doesn't have them.
-    let data;
-    let error;
-    ({ data, error } = await supabase
-      .from('organizations')
-      .select('id, name, description, profile_image, partner_since, link_name, link_url, gallery, display_order, created_at, updated_at')
-      .order('display_order', { ascending: true })
-      .order('created_at', { ascending: false }));
 
-    // Broadly detect missing link columns (Supabase may say schema cache instead of "does not exist")
-    if (error && typeof error.message === 'string' && /link_(name|url)/i.test(error.message)) {
+    const fetchOrganizations = async () => {
+      // Try selecting optional link fields if present; fall back if schema doesn't have them.
+      let data;
+      let error;
       ({ data, error } = await supabase
         .from('organizations')
-        .select('id, name, description, profile_image, partner_since, gallery, display_order, created_at, updated_at')
+        .select('id, name, description, profile_image, partner_since, link_name, link_url, gallery, display_order, created_at, updated_at')
         .order('display_order', { ascending: true })
         .order('created_at', { ascending: false }));
-    }
 
-    if (error) {
-      console.error('Error fetching organizations:', error);
-      return [];
-    }
-    
-    // Transform snake_case to camelCase for frontend
-    const transformed = (data || []).map(org => ({
-      id: org.id,
-      name: org.name,
-      description: org.description,
-      profileImage: org.profile_image,
-      partnerSince: org.partner_since,
-      linkName: org.link_name,
-      linkUrl: org.link_url,
-      gallery: org.gallery || [],      displayOrder: org.display_order,      createdAt: org.created_at,
-      updatedAt: org.updated_at
-    }));
-    
-    // Cache the result
-    cacheManager.set(cacheKey, transformed);
-    return transformed;
+      // Broadly detect missing link columns (Supabase may say schema cache instead of "does not exist")
+      if (error && typeof error.message === 'string' && /link_(name|url)/i.test(error.message)) {
+        ({ data, error } = await supabase
+          .from('organizations')
+          .select('id, name, description, profile_image, partner_since, gallery, display_order, created_at, updated_at')
+          .order('display_order', { ascending: true })
+          .order('created_at', { ascending: false }));
+      }
+
+      if (error) {
+        console.error('Error fetching organizations:', error);
+        return [];
+      }
+
+      // Transform snake_case to camelCase for frontend
+      const transformed = (data || []).map((org) => ({
+        id: org.id,
+        name: org.name,
+        description: org.description,
+        profileImage: org.profile_image,
+        partnerSince: org.partner_since,
+        linkName: org.link_name,
+        linkUrl: org.link_url,
+        gallery: org.gallery || [],
+        displayOrder: org.display_order,
+        createdAt: org.created_at,
+        updatedAt: org.updated_at,
+      }));
+
+      return transformed;
+    };
+
+    return staleWhileRevalidate({
+      cacheKey,
+      fetcher: fetchOrganizations,
+      onUpdate: options.onUpdate,
+    });
   },
 
   // Get organization by ID
-  getOrganizationById: async (id) => {
-    const { data, error } = await supabase
-      .from('organizations')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching organization:', error);
-      return null;
+  getOrganizationById: async (id, options = {}) => {
+    const cacheKey = `organization_${id}`;
+
+    const fetchOrganization = async () => {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching organization:', error);
+        return null;
+      }
+      
+      return data ? {
+        id: data.id,
+        name: data.name,
+        description: data.description,
+        profileImage: data.profile_image,
+        partnerSince: data.partner_since,
+        linkName: data.link_name,
+        linkUrl: data.link_url,
+        gallery: data.gallery,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+      } : null;
+    };
+
+    // Try to hydrate quickly from the list cache if present
+    const allCached = cacheManager.get('all_organizations');
+    if (allCached && Array.isArray(allCached)) {
+      const quick = allCached.find((org) => `${org.id}` === `${id}`);
+      if (quick) {
+        cacheManager.set(cacheKey, quick);
+      }
     }
-    
-    // Transform snake_case to camelCase for frontend
-    return data ? {
-      id: data.id,
-      name: data.name,
-      description: data.description,
-      profileImage: data.profile_image,
-      partnerSince: data.partner_since,
-      linkName: data.link_name,
-      linkUrl: data.link_url,
-      gallery: data.gallery,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at
-    } : null;
+
+    return staleWhileRevalidate({
+      cacheKey,
+      fetcher: fetchOrganization,
+      onUpdate: options.onUpdate,
+    });
   },
 
   // Add new organization
@@ -607,60 +664,80 @@ export const opportunityService = {
   },
 
   // Get all opportunities
-  getAllOpportunities: async () => {
-    // Check cache first
+  getAllOpportunities: async (options = {}) => {
     const cacheKey = 'all_opportunities';
-    const cached = cacheManager.get(cacheKey);
-    if (cached) {
-      return cached;
-    }
 
-    let data;
-    let error;
+    const fetchOpportunities = async () => {
+      let data;
+      let error;
 
-    ({ data, error } = await supabase
-      .from('opportunities')
-      .select('id, title, brief, details, image, location, duration, requirements, status, display_order, created_at, updated_at')
-      .order('display_order', { ascending: true })
-      .order('created_at', { ascending: false }));
-
-    // Gracefully handle older schemas without display_order
-    if (error && typeof error.message === 'string' && /display_order/i.test(error.message)) {
       ({ data, error } = await supabase
         .from('opportunities')
-        .select('id, title, brief, details, image, location, duration, requirements, status, created_at, updated_at')
+        .select('id, title, brief, details, image, location, duration, requirements, status, display_order, created_at, updated_at')
+        .order('display_order', { ascending: true })
         .order('created_at', { ascending: false }));
-    }
 
-    if (error) {
-      console.error('Error fetching opportunities:', error);
-      return [];
-    }
+      // Gracefully handle older schemas without display_order
+      if (error && typeof error.message === 'string' && /display_order/i.test(error.message)) {
+        ({ data, error } = await supabase
+          .from('opportunities')
+          .select('id, title, brief, details, image, location, duration, requirements, status, created_at, updated_at')
+          .order('created_at', { ascending: false }));
+      }
 
-    // Normalize display_order so UI can always sort deterministically
-    const normalized = (data || []).map((opp, index) => ({
-      ...opp,
-      display_order: opp.display_order ?? index
-    }));
+      if (error) {
+        console.error('Error fetching opportunities:', error);
+        return [];
+      }
 
-    // Cache the result
-    cacheManager.set(cacheKey, normalized);
-    return normalized;
+      // Normalize display_order so UI can always sort deterministically
+      const normalized = (data || []).map((opp, index) => ({
+        ...opp,
+        display_order: opp.display_order ?? index,
+      }));
+
+      return normalized;
+    };
+
+    return staleWhileRevalidate({
+      cacheKey,
+      fetcher: fetchOpportunities,
+      onUpdate: options.onUpdate,
+    });
   },
 
   // Get opportunity by ID
-  getOpportunityById: async (id) => {
-    const { data, error } = await supabase
-      .from('opportunities')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      console.error('Error fetching opportunity:', error);
-      return null;
+  getOpportunityById: async (id, options = {}) => {
+    const cacheKey = `opportunity_${id}`;
+
+    const fetchOpportunity = async () => {
+      const { data, error } = await supabase
+        .from('opportunities')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching opportunity:', error);
+        return null;
+      }
+      return data;
+    };
+
+    // Hydrate from list cache if available for instant paint
+    const allCached = cacheManager.get('all_opportunities');
+    if (allCached && Array.isArray(allCached)) {
+      const quick = allCached.find((opp) => `${opp.id}` === `${id}`);
+      if (quick) {
+        cacheManager.set(cacheKey, quick);
+      }
     }
-    return data;
+
+    return staleWhileRevalidate({
+      cacheKey,
+      fetcher: fetchOpportunity,
+      onUpdate: options.onUpdate,
+    });
   },
 
   // Add opportunity

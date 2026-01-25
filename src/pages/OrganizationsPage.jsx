@@ -10,7 +10,7 @@ const OrganizationsPage = () => {
 
   useEffect(() => {
     const fetchOrganizations = async () => {
-      const orgs = await organizationService.getAllOrganizations();
+      const orgs = await organizationService.getAllOrganizations({ onUpdate: setOrganizations });
       setOrganizations(orgs);
     };
     fetchOrganizations();

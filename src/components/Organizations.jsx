@@ -10,7 +10,7 @@ const Organizations = () => {
     const fetchOrganizations = async () => {
       try {
         setLoading(true);
-        const orgs = await organizationService.getAllOrganizations();
+        const orgs = await organizationService.getAllOrganizations({ onUpdate: setOrganizations });
         setOrganizations(orgs);
       } catch (error) {
         console.error('Failed to load organizations:', error);
