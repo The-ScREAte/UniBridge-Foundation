@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
 import IntroVideo from '../components/IntroVideo';
@@ -7,9 +7,45 @@ import About from '../components/About';
 import Organizations from '../components/Organizations';
 import Opportunities from '../components/Opportunities';
 import Footer from '../components/Footer';
+import { donationService } from '../utils/storage';
 
 const Home = () => {
   const [hasIntroVideo, setHasIntroVideo] = useState(false);
+  const [activeDonations, setActiveDonations] = useState([]);
+  const location = useLocation();
+
+  const handleDonateCtaClick = (e) => {
+    if (location.pathname === '/') {
+      e.preventDefault();
+      const target = document.getElementById('donations');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else {
+      window.location.href = '/#donations';
+    }
+  };
+
+  useEffect(() => {
+    const loadDonations = async () => {
+      try {
+        const donations = await donationService.getActiveDonations({ onUpdate: setActiveDonations });
+        setActiveDonations(donations);
+      } catch (error) {
+        console.error('Error loading donations:', error);
+      }
+    };
+    loadDonations();
+  }, []);
+
+  useEffect(() => {
+    if (location.hash === '#donations') {
+      const target = document.getElementById('donations');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  }, [location]);
 
   return (
     <>
@@ -26,10 +62,11 @@ const Home = () => {
                 <em className="font-display italic text-unibridge-blue not-italic">healthy</em>, productive life.
               </h2>
               <a 
-                href="/about" 
+                href="/#donations" 
+                onClick={handleDonateCtaClick}
                 className="inline-block mt-8 sm:mt-10 px-7 py-3.5 sm:px-8 sm:py-4 text-base sm:text-lg font-semibold text-unibridge-navy border-2 border-unibridge-navy rounded-md hover:bg-unibridge-navy hover:text-white transition-colors duration-300"
               >
-                Learn more about our role
+                Donate now
               </a>
             </div>
           </div>
@@ -42,38 +79,78 @@ const Home = () => {
         </div>
         <About />
         {/* Video and Donation CTA */}
-        <section>
+        <section id="donations">
           <div className="ub-container">
             <div className="grid lg:grid-cols-12 gap-10 items-center">
               <IntroVideo className="lg:col-span-7" onStatusChange={setHasIntroVideo} />
-              <div className={hasIntroVideo ? 'lg:col-span-5' : 'lg:col-span-12'}>
-                <h2 className="text-3xl sm:text-4xl font-display font-bold text-unibridge-navy leading-tight">Give with confidence.</h2>
-                <p className="mt-4 text-gray-600 text-lg leading-relaxed">
-                  Your donation supports a verified People with clear goals. You'll receive updates—because giving should feel safe,
-                  personal, and real.
-                </p>
-                <div className="mt-6 grid gap-3">
-                  {[
-                    'Verified before posted',
-                    'Clear purpose for every dollar',
-                    'Updates after support is delivered'
-                  ].map((line) => (
-                    <div key={line} className="flex items-start gap-3">
-                      <span className="mt-1 h-6 w-6 rounded-full bg-unibridge-blue/10 text-unibridge-blue flex items-center justify-center font-bold">✓</span>
-                      <span className="text-gray-700">{line}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="my-5 flex justify-center">
-                  <a
-                    href="mailto:info@unibridge.org?subject=Donation%20Inquiry"
-                    className="inline-flex items-center justify-center px-6 py-3 sm:px-7 sm:py-3.5 text-base font-semibold bg-unibridge-navy text-white border-2 border-unibridge-navy rounded-md hover:bg-white hover:text-unibridge-navy transition-colors duration-300"
-                  >
-                    Donate now
-                  </a>
+              <div className={`${hasIntroVideo ? 'lg:col-span-5' : 'lg:col-span-12'} max-w-4xl mx-auto`}>
+                <div className="grid md:grid-cols-2 gap-6 items-start justify-center text-center md:text-left">
+                  <div>
+                    <h2 className="text-3xl sm:text-4xl font-display font-bold text-unibridge-navy leading-tight">Give with confidence.</h2>
+                    <p className="mt-4 text-gray-600 text-lg leading-relaxed">
+                      Your donation supports a verified People with clear goals. You'll receive updates—because giving should feel safe,
+                      personal, and real.
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    {[
+                      'Verified before posted',
+                      'Clear purpose for every dollar',
+                      'Updates after support is delivered'
+                    ].map((line) => (
+                      <div key={line} className="flex items-start gap-3 justify-center md:justify-start">
+                        <span className="mt-1 h-6 w-6 rounded-full bg-unibridge-blue/10 text-unibridge-blue flex items-center justify-center font-bold">✓</span>
+                        <span className="text-gray-700">{line}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
+            
+            {/* Donations Display */}
+            {activeDonations.length > 0 && (
+              <div className="mt-12">
+                <div className={`grid gap-6 ${
+                  activeDonations.length === 1 
+                    ? 'max-w-xl mx-auto' 
+                    : activeDonations.length === 2
+                    ? 'md:grid-cols-2 max-w-4xl mx-auto'
+                    : 'md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto'
+                }`}>
+                  {activeDonations.map((donation) => (
+                    <div
+                      key={donation.id}
+                      className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 border border-gray-100"
+                    >
+                      {donation.image && (
+                        <img
+                          src={donation.image}
+                          alt={donation.name}
+                          className="w-full h-48 object-cover"
+                        />
+                      )}
+                      <div className="p-6">
+                        <h3 className="text-xl font-bold text-unibridge-navy mb-3">
+                          {donation.name}
+                        </h3>
+                        <p className="text-gray-600 mb-4 leading-relaxed">
+                          {donation.description}
+                        </p>
+                        <a
+                          href={donation.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center w-full px-6 py-3 bg-unibridge-navy text-white font-semibold rounded-lg hover:bg-unibridge-blue transition-colors duration-300"
+                        >
+                          Donate now
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </section>
         {/* Swipeable: Focus Areas */}

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authService, organizationService, imageUtils, teamService, messageService, opportunityService, aboutService, heroService, introVideoService } from '../utils/storage';
+import { authService, organizationService, imageUtils, teamService, messageService, opportunityService, aboutService, heroService, introVideoService, donationService } from '../utils/storage';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('organizations'); // 'organizations', 'team', 'content', or 'opportunities'
+  const [activeTab, setActiveTab] = useState('organizations'); // 'organizations', 'team', 'content', 'opportunities', or 'donations'
   const [organizations, setOrganizations] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [contactMessages, setContactMessages] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
+  const [donations, setDonations] = useState([]);
   const [aboutContent, setAboutContent] = useState({
     intro: '',
     mission: '',
@@ -71,11 +72,22 @@ const AdminDashboard = () => {
   const [draggedOrgIndex, setDraggedOrgIndex] = useState(null);
   const [draggedTeamIndex, setDraggedTeamIndex] = useState(null);
   const [draggedOpportunityIndex, setDraggedOpportunityIndex] = useState(null);
+  const [draggedDonationIndex, setDraggedDonationIndex] = useState(null);
   const [editingImage, setEditingImage] = useState(null);
   const [editingImageOrg, setEditingImageOrg] = useState(null);
   const [showEditImageModal, setShowEditImageModal] = useState(false);
+  const [showDonationModal, setShowDonationModal] = useState(false);
+  const [editingDonation, setEditingDonation] = useState(null);
+  const [donationForm, setDonationForm] = useState({
+    name: '',
+    link: '',
+    description: '',
+    image: '',
+    is_active: false
+  });
 
   useEffect(() => {
+    loadDonations();
     if (!authService.isAuthenticated()) {
       navigate('/admin');
     }
@@ -686,6 +698,107 @@ const AdminDashboard = () => {
     }
   };
 
+  // Donation Management Functions
+  const loadDonations = async () => {
+    const saved = await donationService.getAllDonations({ onUpdate: setDonations });
+    setDonations(saved);
+  };
+
+  const handleDonationFormChange = (e) => {
+    setDonationForm({
+      ...donationForm,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleDonationImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const validation = imageUtils.validateImageFile(file);
+    if (!validation.valid) {
+      alert(validation.error);
+      return;
+    }
+
+    try {
+      const base64 = await imageUtils.fileToBase64(file);
+      setDonationForm({ ...donationForm, image: base64 });
+    } catch (error) {
+      alert('Error uploading image');
+    }
+  };
+
+  const handleSaveDonation = async () => {
+    if (!donationForm.name || !donationForm.link || !donationForm.description) {
+      alert('Please fill in name, link, and description');
+      return;
+    }
+
+    try {
+      if (editingDonation) {
+        await donationService.updateDonation(editingDonation.id, donationForm);
+      } else {
+        await donationService.addDonation(donationForm);
+      }
+      setDonationForm({ name: '', link: '', description: '', image: '', is_active: false });
+      setShowDonationModal(false);
+      setEditingDonation(null);
+      loadDonations();
+    } catch (error) {
+      alert('Failed to save donation');
+    }
+  };
+
+  const handleEditDonation = (donation) => {
+    setEditingDonation(donation);
+    setDonationForm({
+      name: donation.name,
+      link: donation.link,
+      description: donation.description,
+      image: donation.image || '',
+      is_active: donation.is_active
+    });
+    setShowDonationModal(true);
+  };
+
+  const handleDeleteDonation = async (id) => {
+    if (window.confirm('Are you sure you want to delete this donation?')) {
+      await donationService.deleteDonation(id);
+      loadDonations();
+    }
+  };
+
+  const handleToggleDonationActive = async (id, currentStatus) => {
+    await donationService.toggleActive(id, !currentStatus);
+    loadDonations();
+  };
+
+  // Drag and drop handlers for donations
+  const handleDonationDragStart = (index) => {
+    setDraggedDonationIndex(index);
+  };
+
+  const handleDonationDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedDonationIndex === null || draggedDonationIndex === index) return;
+
+    const newDonations = [...donations];
+    const draggedItem = newDonations[draggedDonationIndex];
+    newDonations.splice(draggedDonationIndex, 1);
+    newDonations.splice(index, 0, draggedItem);
+
+    setDonations(newDonations);
+    setDraggedDonationIndex(index);
+  };
+
+  const handleDonationDragEnd = async () => {
+    if (draggedDonationIndex !== null) {
+      await donationService.updateDisplayOrder(donations);
+      setDraggedDonationIndex(null);
+    }
+  };
+
   const handleDeleteIntroVideo = async () => {
     if (window.confirm('Are you sure you want to delete the intro video?')) {
       const payload = { video_url: null, is_active: false };
@@ -791,6 +904,16 @@ const AdminDashboard = () => {
             }`}
           >
             Video
+          </button>
+          <button
+            onClick={() => setActiveTab('donations')}
+            className={`px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-semibold transition-colors whitespace-nowrap ${
+              activeTab === 'donations'
+                ? 'text-unibridge-blue border-b-2 border-unibridge-blue'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Donations
           </button>
         </div>
 
@@ -1907,6 +2030,102 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {/* Donations Tab */}
+      {activeTab === 'donations' && (
+        <>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-unibridge-navy">Manage Donations</h2>
+              <p className="text-gray-600 mt-2">Create and manage donation campaigns. Only active donations will be displayed on the site.</p>
+            </div>
+            <button
+              onClick={() => {
+                setEditingDonation(null);
+                setDonationForm({ name: '', link: '', description: '', image: '', is_active: false });
+                setShowDonationModal(true);
+              }}
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-unibridge-blue text-white rounded-lg hover:bg-unibridge-navy transition-colors flex items-center gap-2 text-sm sm:text-base"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Donation
+            </button>
+          </div>
+
+          <div className="grid gap-4">
+            {donations.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                <p className="text-gray-500">No donations yet. Create your first donation campaign!</p>
+              </div>
+            ) : (
+              donations.map((donation, index) => (
+                <div
+                  key={donation.id}
+                  draggable
+                  onDragStart={() => handleDonationDragStart(index)}
+                  onDragOver={(e) => handleDonationDragOver(e, index)}
+                  onDragEnd={handleDonationDragEnd}
+                  className={`bg-white rounded-lg shadow-md p-4 sm:p-6 cursor-move hover:shadow-lg transition-shadow ${
+                    donation.is_active ? 'border-l-4 border-green-500' : 'border-l-4 border-gray-300'
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    {donation.image && (
+                      <img
+                        src={donation.image}
+                        alt={donation.name}
+                        className="w-full sm:w-32 h-32 object-cover rounded-lg"
+                      />
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="text-xl font-bold text-unibridge-navy">{donation.name}</h3>
+                          <p className="text-gray-600 mt-2">{donation.description}</p>
+                          <a
+                            href={donation.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-unibridge-blue hover:text-unibridge-navy mt-2 inline-block text-sm"
+                          >
+                            {donation.link}
+                          </a>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <button
+                            onClick={() => handleToggleDonationActive(donation.id, donation.is_active)}
+                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                              donation.is_active
+                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {donation.is_active ? 'Active' : 'Inactive'}
+                          </button>
+                          <button
+                            onClick={() => handleEditDonation(donation)}
+                            className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDonation(donation.id)}
+                            className="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
+
       {/* Image Lightbox Modal */}
       {lightboxImage && (
         <div 
@@ -2071,6 +2290,115 @@ const AdminDashboard = () => {
                 className="px-6 py-2 bg-unibridge-blue text-white rounded-lg hover:bg-unibridge-navy transition-colors"
               >
                 Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Donation Modal */}
+      {showDonationModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center p-0 sm:p-4 z-50 overflow-y-auto">
+          <div className="bg-white rounded-none sm:rounded-2xl max-w-2xl w-full min-h-screen sm:min-h-0 sm:my-8 max-h-screen sm:max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b sticky top-0 bg-white z-10">
+              <h3 className="text-2xl font-bold text-unibridge-navy">
+                {editingDonation ? 'Edit Donation' : 'Add New Donation'}
+              </h3>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Donation Name *
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={donationForm.name}
+                  onChange={handleDonationFormChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-unibridge-blue focus:border-transparent outline-none"
+                  placeholder="e.g., Support Education in Kenya"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Donation Link *
+                </label>
+                <input
+                  type="url"
+                  name="link"
+                  value={donationForm.link}
+                  onChange={handleDonationFormChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-unibridge-blue focus:border-transparent outline-none"
+                  placeholder="https://donate.example.com/campaign"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description *
+                </label>
+                <textarea
+                  name="description"
+                  value={donationForm.description}
+                  onChange={handleDonationFormChange}
+                  rows={4}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-unibridge-blue focus:border-transparent outline-none resize-none"
+                  placeholder="Brief description of the donation campaign..."
+                ></textarea>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Campaign Image
+                </label>
+                {donationForm.image && (
+                  <img
+                    src={donationForm.image}
+                    alt="Preview"
+                    className="w-full h-48 object-cover rounded-lg mb-4"
+                  />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleDonationImageUpload}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                />
+                <p className="text-sm text-gray-500 mt-1">Recommended size: 800x400px</p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={donationForm.is_active}
+                  onChange={(e) => setDonationForm({ ...donationForm, is_active: e.target.checked })}
+                  className="w-5 h-5 text-unibridge-blue border-gray-300 rounded focus:ring-unibridge-blue"
+                />
+                <label htmlFor="is_active" className="text-sm font-medium text-gray-700">
+                  Make this donation active on the site
+                </label>
+              </div>
+            </div>
+
+            <div className="p-6 border-t flex justify-end gap-4">
+              <button
+                onClick={() => {
+                  setShowDonationModal(false);
+                  setEditingDonation(null);
+                  setDonationForm({ name: '', link: '', description: '', image: '', is_active: false });
+                }}
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveDonation}
+                className="px-6 py-2 bg-unibridge-blue text-white rounded-lg hover:bg-unibridge-navy transition-colors"
+              >
+                {editingDonation ? 'Update Donation' : 'Create Donation'}
               </button>
             </div>
           </div>

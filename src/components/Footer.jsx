@@ -1,10 +1,21 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const Footer = () => {
   const [email, setEmail] = useState('');
-
-  const donationUrl = 'mailto:info@unibridge.org?subject=Donation%20Inquiry';
+  const location = useLocation();
+  const handleDonateClick = (e) => {
+    if (location.pathname === '/') {
+      e.preventDefault();
+      const target = document.getElementById('donations');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else {
+      window.location.href = '/#donations';
+    }
+  };
+  
   const mailtoHref = `mailto:info@unibridge.org?subject=${encodeURIComponent('Newsletter signup')}&body=${encodeURIComponent(`Please add me to the newsletter list.\n\nEmail: ${email}`)}`;
 
   return (
@@ -26,9 +37,8 @@ const Footer = () => {
 
             <div className="mt-6 flex flex-wrap gap-3">
               <a
-                href={donationUrl}
-                target="_blank"
-                rel="noreferrer"
+                href="/#donations"
+                onClick={handleDonateClick}
                 className="inline-flex items-center justify-center px-6 py-3 sm:px-7 sm:py-3.5 text-base font-semibold bg-white text-unibridge-navy border-2 border-white rounded-md hover:bg-unibridge-navy hover:text-white hover:border-unibridge-navy transition-colors duration-300"
               >
                 Donate

@@ -1088,3 +1088,151 @@ export const introVideoService = {
     return data;
   }
 };
+
+// Donation Service
+export const donationService = {
+  // Get all donations
+  getAllDonations: async ({ onUpdate } = {}) => {
+    return staleWhileRevalidate({
+      cacheKey: 'donations',
+      fetcher: async () => {
+        const { data, error } = await supabase
+          .from('donations')
+          .select('*')
+          .order('display_order', { ascending: true });
+        
+        if (error) {
+          console.error('Error fetching donations:', error);
+          return [];
+        }
+        return data || [];
+      },
+      onUpdate
+    });
+  },
+
+  // Get active donations only
+  getActiveDonations: async ({ onUpdate } = {}) => {
+    return staleWhileRevalidate({
+      cacheKey: 'active_donations',
+      fetcher: async () => {
+        const { data, error } = await supabase
+          .from('donations')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+        
+        if (error) {
+          console.error('Error fetching active donations:', error);
+          return [];
+        }
+        return data || [];
+      },
+      onUpdate
+    });
+  },
+
+  // Add a new donation
+  addDonation: async (donationData) => {
+    const { data: maxOrder } = await supabase
+      .from('donations')
+      .select('display_order')
+      .order('display_order', { ascending: false })
+      .limit(1)
+      .single();
+
+    const newOrder = maxOrder ? maxOrder.display_order + 1 : 0;
+
+    const { data, error } = await supabase
+      .from('donations')
+      .insert([{
+        ...donationData,
+        display_order: newOrder,
+        created_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding donation:', error);
+      throw error;
+    }
+
+    cacheManager.invalidate(['donations', 'active_donations']);
+    return data;
+  },
+
+  // Update a donation
+  updateDonation: async (id, donationData) => {
+    const { data, error } = await supabase
+      .from('donations')
+      .update({
+        ...donationData,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating donation:', error);
+      throw error;
+    }
+
+    cacheManager.invalidate(['donations', 'active_donations']);
+    return data;
+  },
+
+  // Toggle donation active status
+  toggleActive: async (id, isActive) => {
+    const { data, error } = await supabase
+      .from('donations')
+      .update({ 
+        is_active: isActive,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error toggling donation status:', error);
+      throw error;
+    }
+
+    cacheManager.invalidate(['donations', 'active_donations']);
+    return data;
+  },
+
+  // Delete a donation
+  deleteDonation: async (id) => {
+    const { error } = await supabase
+      .from('donations')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting donation:', error);
+      throw error;
+    }
+
+    cacheManager.invalidate(['donations', 'active_donations']);
+  },
+
+  // Update display order
+  updateDisplayOrder: async (donations) => {
+    const updates = donations.map((donation, index) => ({
+      id: donation.id,
+      display_order: index
+    }));
+
+    for (const update of updates) {
+      await supabase
+        .from('donations')
+        .update({ display_order: update.display_order })
+        .eq('id', update.id);
+    }
+
+    cacheManager.invalidate(['donations', 'active_donations']);
+  }
+};
