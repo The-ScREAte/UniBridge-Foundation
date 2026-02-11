@@ -17,11 +17,16 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       'x-client-info': 'unibridge-web',
     },
   },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
 });
 
 // Cache with in-memory + localStorage persistence so we can render fast on reload
 const cache = new Map();
-const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 const PERSIST_PREFIX = 'ub_cache_';
 
 const canUseStorage = () => typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -47,9 +52,23 @@ const readPersisted = (key) => {
 const writePersisted = (key, data) => {
   if (!canUseStorage()) return;
   try {
+    // Don't cache if data is too large (>100KB) to prevent quota errors
     const payload = JSON.stringify({ timestamp: Date.now(), data });
+    if (payload.length > 100000) {
+      console.warn('Cache item too large, skipping persistence:', key);
+      return;
+    }
     window.localStorage.setItem(`${PERSIST_PREFIX}${key}`, payload);
   } catch (err) {
+    // Clear old cache if quota exceeded
+    if (err.name === 'QuotaExceededError') {
+      console.warn('Storage quota exceeded, clearing cache...');
+      Object.keys(window.localStorage).forEach(k => {
+        if (k.startsWith(PERSIST_PREFIX)) {
+          window.localStorage.removeItem(k);
+        }
+      });
+    }
     console.warn('Cache write failed, continuing without persistence:', err);
   }
 };
@@ -88,10 +107,14 @@ export const cacheManager = {
   // Clear one or all cache entries
   clear: (key) => {
     if (key) {
-      cache.delete(key);
-      if (canUseStorage()) {
-        window.localStorage.removeItem(`${PERSIST_PREFIX}${key}`);
-      }
+      // Handle both single keys and arrays of keys
+      const keys = Array.isArray(key) ? key : [key];
+      keys.forEach(k => {
+        cache.delete(k);
+        if (canUseStorage()) {
+          window.localStorage.removeItem(`${PERSIST_PREFIX}${k}`);
+        }
+      });
     } else {
       cache.clear();
       if (canUseStorage()) {
@@ -100,5 +123,10 @@ export const cacheManager = {
           .forEach((k) => window.localStorage.removeItem(k));
       }
     }
+  },
+  
+  // Invalidate - alias for clear to match usage in code
+  invalidate: function(key) {
+    return this.clear(key);
   },
 };

@@ -10,23 +10,32 @@ const safeStringify = (value) => {
   }
 };
 
+// Debounce helper to prevent cascade refreshes
+const refreshTimers = new Map();
+
 const staleWhileRevalidate = async ({ cacheKey, fetcher, onUpdate }) => {
   const cached = cacheManager.get(cacheKey);
   if (cached) {
-    // Background refresh so the UI can be updated if newer data exists
-    Promise.resolve()
-      .then(async () => {
-        const fresh = await fetcher();
-        cacheManager.set(cacheKey, fresh);
-        if (onUpdate) {
-          const freshStr = safeStringify(fresh);
-          const cachedStr = safeStringify(cached);
-          if (freshStr !== cachedStr) {
-            onUpdate(fresh);
-          }
-        }
-      })
-      .catch((err) => console.error('Background refresh failed:', err));
+    // Debounce background refresh to prevent cascade
+    if (!refreshTimers.has(cacheKey)) {
+      const timerId = setTimeout(() => {
+        Promise.resolve()
+          .then(async () => {
+            const fresh = await fetcher();
+            cacheManager.set(cacheKey, fresh);
+            if (onUpdate) {
+              const freshStr = safeStringify(fresh);
+              const cachedStr = safeStringify(cached);
+              if (freshStr !== cachedStr) {
+                onUpdate(fresh);
+              }
+            }
+          })
+          .catch((err) => console.error('Background refresh failed:', err))
+          .finally(() => refreshTimers.delete(cacheKey));
+      }, 500); // Reduced to 500ms for faster background refresh
+      refreshTimers.set(cacheKey, timerId);
+    }
 
     return cached;
   }
@@ -116,17 +125,18 @@ export const organizationService = {
       let error;
       ({ data, error } = await supabase
         .from('organizations')
-        .select('id, name, description, profile_image, partner_since, link_name, link_url, gallery, display_order, created_at, updated_at')
+        .select('id, name, description, profile_image, partner_since')
         .order('display_order', { ascending: true })
-        .order('created_at', { ascending: false }));
+        .order('created_at', { ascending: false })
+        .limit(50));
 
       // Broadly detect missing link columns (Supabase may say schema cache instead of "does not exist")
-      if (error && typeof error.message === 'string' && /link_(name|url)/i.test(error.message)) {
+      if (error && typeof error.message === 'string' && /display_order/i.test(error.message)) {
         ({ data, error } = await supabase
           .from('organizations')
-          .select('id, name, description, profile_image, partner_since, gallery, display_order, created_at, updated_at')
-          .order('display_order', { ascending: true })
-          .order('created_at', { ascending: false }));
+          .select('id, name, description, profile_image, partner_since')
+          .order('created_at', { ascending: false })
+          .limit(50));
       }
 
       if (error) {
@@ -459,17 +469,12 @@ export const imageUtils = {
 
   // Validate image file
   validateImageFile: (file) => {
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
     if (!validTypes.includes(file.type)) {
-      return { valid: false, error: 'Please upload a valid image file (JPEG, PNG, GIF, or WebP)' };
+      return { valid: false, error: 'Please upload a valid image file (JPEG, PNG, GIF, WebP, or SVG)' };
     }
     
-    // Optional: Add size limit (e.g., 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      return { valid: false, error: 'Image size should be less than 5MB' };
-    }
-    
+    // No size limit - allow any size
     return { valid: true };
   }
 };
@@ -494,18 +499,29 @@ export const teamService = {
     return payload;
   },
   // Get all team members
-  getAllMembers: async () => {
-    const { data, error } = await supabase
-      .from('team_members')
-      .select('*')
-      .order('display_order', { ascending: true })
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error fetching team members:', error);
-      return [];
-    }
-    return data || [];
+  getAllMembers: async (options = {}) => {
+    const cacheKey = 'team_members';
+
+    const fetchMembers = async () => {
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('id, name, role, bio, image, is_active, display_order, created_at, updated_at')
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching team members:', error);
+        return [];
+      }
+
+      return data || [];
+    };
+
+    return staleWhileRevalidate({
+      cacheKey,
+      fetcher: fetchMembers,
+      onUpdate: options.onUpdate,
+    });
   },
 
   // Add team member
@@ -673,16 +689,18 @@ export const opportunityService = {
 
       ({ data, error } = await supabase
         .from('opportunities')
-        .select('id, title, brief, details, image, location, duration, requirements, status, display_order, created_at, updated_at')
+        .select('id, title, brief, image')
         .order('display_order', { ascending: true })
-        .order('created_at', { ascending: false }));
+        .order('created_at', { ascending: false })
+        .limit(50));
 
       // Gracefully handle older schemas without display_order
       if (error && typeof error.message === 'string' && /display_order/i.test(error.message)) {
         ({ data, error } = await supabase
           .from('opportunities')
-          .select('id, title, brief, details, image, location, duration, requirements, status, created_at, updated_at')
-          .order('created_at', { ascending: false }));
+          .select('id, title, brief, image')
+          .order('created_at', { ascending: false })
+          .limit(50));
       }
 
       if (error) {
@@ -690,13 +708,7 @@ export const opportunityService = {
         return [];
       }
 
-      // Normalize display_order so UI can always sort deterministically
-      const normalized = (data || []).map((opp, index) => ({
-        ...opp,
-        display_order: opp.display_order ?? index,
-      }));
-
-      return normalized;
+      return data || [];
     };
 
     return staleWhileRevalidate({
@@ -1134,19 +1146,31 @@ export const donationService = {
 
   // Add a new donation
   addDonation: async (donationData) => {
-    const { data: maxOrder } = await supabase
+    // Upload image if it's a base64 data URL
+    let processedData = { ...donationData };
+    if (processedData.image && typeof processedData.image === 'string' && processedData.image.startsWith('data:image')) {
+      try {
+        const upload = await imageUtils.uploadDataUrl(processedData.image, 'donation-images');
+        if (upload.success) {
+          processedData.image = upload.url;
+        }
+      } catch (err) {
+        console.warn('Donation image upload failed, keeping inline image:', err);
+      }
+    }
+
+    const { data: maxOrderResult } = await supabase
       .from('donations')
       .select('display_order')
       .order('display_order', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
 
-    const newOrder = maxOrder ? maxOrder.display_order + 1 : 0;
+    const newOrder = (maxOrderResult && maxOrderResult.length > 0) ? maxOrderResult[0].display_order + 1 : 0;
 
     const { data, error } = await supabase
       .from('donations')
       .insert([{
-        ...donationData,
+        ...processedData,
         display_order: newOrder,
         created_at: new Date().toISOString()
       }])
@@ -1164,10 +1188,23 @@ export const donationService = {
 
   // Update a donation
   updateDonation: async (id, donationData) => {
+    // Upload image if it's a base64 data URL
+    let processedData = { ...donationData };
+    if (processedData.image && typeof processedData.image === 'string' && processedData.image.startsWith('data:image')) {
+      try {
+        const upload = await imageUtils.uploadDataUrl(processedData.image, 'donation-images');
+        if (upload.success) {
+          processedData.image = upload.url;
+        }
+      } catch (err) {
+        console.warn('Donation image upload failed, keeping inline image:', err);
+      }
+    }
+
     const { data, error } = await supabase
       .from('donations')
       .update({
-        ...donationData,
+        ...processedData,
         updated_at: new Date().toISOString()
       })
       .eq('id', id)

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { teamService, aboutService } from '../utils/storage';
+import { cacheManager } from '../utils/supabaseClient';
 
 // You can add team members through admin or hardcode them here
 const TEAM_MEMBERS = [
@@ -27,9 +28,21 @@ const AboutPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      // Show cached team instantly if available
+      const cachedTeam = cacheManager.get('team_members');
+      if (cachedTeam && Array.isArray(cachedTeam) && cachedTeam.length > 0) {
+        const activeCached = cachedTeam.filter(member => member.is_active !== false);
+        setTeamMembers(activeCached.length > 0 ? activeCached : TEAM_MEMBERS);
+      }
+
       // Load team members from Supabase
-      const team = await teamService.getAllMembers();
-      setTeamMembers(team.length > 0 ? team : TEAM_MEMBERS);
+      const team = await teamService.getAllMembers({ onUpdate: (data) => {
+        const active = data.filter(member => member.is_active !== false);
+        setTeamMembers(active.length > 0 ? active : TEAM_MEMBERS);
+      }});
+      // Filter to only show active team members
+      const activeMembers = team.filter(member => member.is_active !== false);
+      setTeamMembers(activeMembers.length > 0 ? activeMembers : TEAM_MEMBERS);
 
       // Load about content from Supabase
       const content = await aboutService.getAboutContent();

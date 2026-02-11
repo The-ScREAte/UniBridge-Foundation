@@ -56,7 +56,8 @@ const AdminDashboard = () => {
     name: '',
     role: '',
     image: '',
-    bio: ''
+    bio: '',
+    is_active: true
   });
 
   const [opportunityForm, setOpportunityForm] = useState({
@@ -87,18 +88,51 @@ const AdminDashboard = () => {
   });
 
   useEffect(() => {
-    loadDonations();
     if (!authService.isAuthenticated()) {
       navigate('/admin');
+      return;
     }
-    loadOrganizations();
-    loadTeamMembers();
-    loadContactMessages();
-    loadAboutContent();
-    loadOpportunities();
-    loadHeroContent();
-    loadIntroVideo();
-  }, [navigate]);
+    
+    // Only load data for the active tab on mount
+    if (activeTab === 'organizations') {
+      loadOrganizations();
+    } else if (activeTab === 'team') {
+      loadTeamMembers();
+    } else if (activeTab === 'opportunities') {
+      loadOpportunities();
+    } else if (activeTab === 'content') {
+      loadContactMessages();
+      loadAboutContent();
+    } else if (activeTab === 'hero') {
+      loadHeroContent();
+    } else if (activeTab === 'intro-video') {
+      loadIntroVideo();
+    } else if (activeTab === 'donations') {
+      loadDonations();
+    }
+  }, [navigate, activeTab]);
+  
+  // Load data when switching tabs
+  useEffect(() => {
+    if (!authService.isAuthenticated()) return;
+    
+    if (activeTab === 'organizations' && organizations.length === 0) {
+      loadOrganizations();
+    } else if (activeTab === 'team' && teamMembers.length === 0) {
+      loadTeamMembers();
+    } else if (activeTab === 'opportunities' && opportunities.length === 0) {
+      loadOpportunities();
+    } else if (activeTab === 'content' && contactMessages.length === 0) {
+      loadContactMessages();
+      loadAboutContent();
+    } else if (activeTab === 'hero' && !heroContent.title) {
+      loadHeroContent();
+    } else if (activeTab === 'intro-video' && !introVideo.video_url) {
+      loadIntroVideo();
+    } else if (activeTab === 'donations' && donations.length === 0) {
+      loadDonations();
+    }
+  }, [activeTab]);
 
   const loadOrganizations = async () => {
     const orgs = await organizationService.getAllOrganizations({ onUpdate: setOrganizations });
@@ -457,7 +491,7 @@ const AdminDashboard = () => {
       
       setShowTeamModal(false);
       setEditingMember(null);
-      setTeamForm({ name: '', role: '', image: '', bio: '' });
+      setTeamForm({ name: '', role: '', image: '', bio: '', is_active: true });
       loadTeamMembers();
     } catch (error) {
       alert('Failed to save team member');
@@ -470,7 +504,8 @@ const AdminDashboard = () => {
       name: member.name,
       role: member.role,
       image: member.image || '',
-      bio: member.bio || ''
+      bio: member.bio || '',
+      is_active: member.is_active !== false
     });
     setShowTeamModal(true);
   };
@@ -480,6 +515,15 @@ const AdminDashboard = () => {
       await teamService.deleteMember(id);
       loadTeamMembers();
     }
+  };
+
+  const handleToggleTeamMemberActive = async (member) => {
+    const newStatus = !member.is_active;
+    await teamService.updateMember(member.id, { 
+      ...member, 
+      is_active: newStatus 
+    });
+    loadTeamMembers();
   };
 
   const handleAboutContentChange = (field, value) => {
@@ -622,12 +666,7 @@ const AdminDashboard = () => {
       return;
     }
 
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (file.size > maxSize) {
-      alert('Video size should be less than 50MB');
-      return;
-    }
-
+    // No size limit - allow any video size
     try {
       const base64 = await imageUtils.fileToBase64(file);
       setHeroContent({ ...heroContent, background_video: base64, use_video: true });
@@ -663,12 +702,7 @@ const AdminDashboard = () => {
       return;
     }
 
-    const maxSize = 50 * 1024 * 1024; // 50MB
-    if (file.size > maxSize) {
-      alert('Video size should be less than 50MB');
-      return;
-    }
-
+    // No size limit - allow any video size
     try {
       const upload = await imageUtils.uploadVideo(file, 'hero-media');
       if (!upload.success) {
@@ -1066,7 +1100,7 @@ const AdminDashboard = () => {
               <button
                 onClick={() => {
                   setEditingMember(null);
-                  setTeamForm({ name: '', role: '', image: '', bio: '' });
+                  setTeamForm({ name: '', role: '', image: '', bio: '', is_active: true });
                   setShowTeamModal(true);
                 }}
                 className="w-full sm:w-auto bg-unibridge-blue text-white px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base rounded-lg hover:bg-unibridge-navy transition-colors font-semibold flex items-center justify-center gap-2"
@@ -1107,13 +1141,36 @@ const AdminDashboard = () => {
                         )}
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-unibridge-navy mb-1">{member.name}</h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-xl font-bold text-unibridge-navy">{member.name}</h3>
+                          {member.is_active !== false ? (
+                            <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Active</span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">Inactive</span>
+                          )}
+                        </div>
                         <p className="text-unibridge-blue font-semibold mb-2">{member.role}</p>
                         {member.bio && (
                           <p className="text-gray-600 text-sm line-clamp-2">{member.bio}</p>
                         )}
                       </div>
                       <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => handleToggleTeamMemberActive(member)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            member.is_active !== false
+                              ? 'text-green-600 hover:bg-green-50'
+                              : 'text-gray-400 hover:bg-gray-50'
+                          }`}
+                          title={member.is_active !== false ? 'Active - Click to hide' : 'Inactive - Click to show'}
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {member.is_active !== false ? (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            ) : null}
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
                         <button
                           onClick={() => handleEditTeamMember(member)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -1664,6 +1721,23 @@ const AdminDashboard = () => {
                   placeholder="Brief bio about this team member"
                 ></textarea>
               </div>
+
+              <div>
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={teamForm.is_active}
+                    onChange={(e) => setTeamForm({ ...teamForm, is_active: e.target.checked })}
+                    className="w-5 h-5 text-unibridge-blue rounded focus:ring-2 focus:ring-unibridge-blue"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Show on About page (Active)
+                  </span>
+                </label>
+                <p className="text-xs text-gray-500 mt-1 ml-8">
+                  Uncheck to hide this team member from the public About page
+                </p>
+              </div>
             </div>
 
             <div className="p-6 border-t flex justify-end gap-4 sticky bottom-0 bg-white">
@@ -1671,7 +1745,7 @@ const AdminDashboard = () => {
                 onClick={() => {
                   setShowTeamModal(false);
                   setEditingMember(null);
-                  setTeamForm({ name: '', role: '', image: '', bio: '' });
+                  setTeamForm({ name: '', role: '', image: '', bio: '', is_active: true });
                 }}
                 className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >

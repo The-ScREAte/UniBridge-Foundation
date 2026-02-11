@@ -7,12 +7,18 @@ import About from '../components/About';
 import Organizations from '../components/Organizations';
 import Opportunities from '../components/Opportunities';
 import Footer from '../components/Footer';
-import { donationService } from '../utils/storage';
+import { donationService, organizationService, opportunityService } from '../utils/storage';
 
 const Home = () => {
   const [hasIntroVideo, setHasIntroVideo] = useState(false);
   const [activeDonations, setActiveDonations] = useState([]);
   const location = useLocation();
+
+  // Preload critical data immediately to populate cache
+  useEffect(() => {
+    organizationService.getAllOrganizations();
+    opportunityService.getAllOpportunities();
+  }, []);
 
   const handleDonateCtaClick = (e) => {
     if (location.pathname === '/') {
@@ -29,13 +35,32 @@ const Home = () => {
   useEffect(() => {
     const loadDonations = async () => {
       try {
+        // Only load if in viewport or about to be
+        const donationsSection = document.getElementById('donations');
+        if (!donationsSection) return;
+        
         const donations = await donationService.getActiveDonations({ onUpdate: setActiveDonations });
         setActiveDonations(donations);
       } catch (error) {
         console.error('Error loading donations:', error);
       }
     };
-    loadDonations();
+    
+    // Delay donation loading until user scrolls or after 2 seconds
+    const timer = setTimeout(loadDonations, 2000);
+    
+    const handleScroll = () => {
+      clearTimeout(timer);
+      loadDonations();
+      window.removeEventListener('scroll', handleScroll);
+    };
+    
+    window.addEventListener('scroll', handleScroll, { once: true, passive: true });
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -127,6 +152,7 @@ const Home = () => {
                         <img
                           src={donation.image}
                           alt={donation.name}
+                          loading="lazy"
                           className="w-full h-48 object-cover"
                         />
                       )}

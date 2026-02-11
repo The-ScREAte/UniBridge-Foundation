@@ -35,12 +35,12 @@ const IntroVideo = ({ className = 'lg:col-span-7', onStatusChange }) => {
           {isVisible ? (
             <video
               src={videoContent.video_url}
-              autoPlay
               muted
               loop
               controls
               playsInline
-              preload="auto"
+              preload="none"
+              poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 9'%3E%3Crect fill='%23000' width='16' height='9'/%3E%3C/svg%3E"
               className="w-full h-[200px] sm:h-[300px] lg:h-[360px]"
               style={{ objectFit: 'cover', display: 'block', background: '#000' }}
             >

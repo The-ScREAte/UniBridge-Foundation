@@ -90,12 +90,6 @@ const AdminLogin = () => {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
-
-          <div className="mt-5 sm:mt-6 pt-5 sm:pt-6 border-t border-gray-200">
-            <p className="text-xs sm:text-sm text-gray-600 text-center">
-              Default credentials: <span className="font-mono bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">admin</span> / <span className="font-mono bg-gray-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-xs">unibridge2025</span>
-            </p>
-          </div>
         </div>
 
         <div className="text-center mt-5 sm:mt-6">

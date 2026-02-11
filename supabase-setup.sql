@@ -42,10 +42,14 @@ CREATE TABLE IF NOT EXISTS team_members (
   role TEXT NOT NULL,
   image TEXT,
   bio TEXT,
+  is_active BOOLEAN DEFAULT true,
   display_order INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Backfill column for existing databases
+ALTER TABLE team_members ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
 
 ALTER TABLE team_members ENABLE ROW LEVEL SECURITY;
 
@@ -233,6 +237,11 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('hero-media', 'hero-media', true)
 ON CONFLICT (id) DO NOTHING;
 
+-- Create donation-images bucket
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('donation-images', 'donation-images', true)
+ON CONFLICT (id) DO NOTHING;
+
 -- ============================================
 -- 8. STORAGE POLICIES
 -- ============================================
@@ -309,6 +318,23 @@ WITH CHECK (bucket_id = 'hero-media');
 CREATE POLICY "Anyone can delete hero media"
 ON storage.objects FOR DELETE
 USING (bucket_id = 'hero-media');
+
+-- Donation images policies
+DROP POLICY IF EXISTS "Public can view donation images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can upload donation images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can delete donation images" ON storage.objects;
+
+CREATE POLICY "Public can view donation images"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'donation-images');
+
+CREATE POLICY "Anyone can upload donation images"
+ON storage.objects FOR INSERT
+WITH CHECK (bucket_id = 'donation-images');
+
+CREATE POLICY "Anyone can delete donation images"
+ON storage.objects FOR DELETE
+USING (bucket_id = 'donation-images');
 
 -- ============================================
 -- SETUP COMPLETE!

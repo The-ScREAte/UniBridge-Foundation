@@ -49,5 +49,27 @@ CREATE TRIGGER update_donations_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+-- Create donation-images storage bucket
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('donation-images', 'donation-images', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage policies for donation images
+DROP POLICY IF EXISTS "Public can view donation images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can upload donation images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can delete donation images" ON storage.objects;
+
+CREATE POLICY "Public can view donation images"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'donation-images');
+
+CREATE POLICY "Anyone can upload donation images"
+ON storage.objects FOR INSERT
+WITH CHECK (bucket_id = 'donation-images');
+
+CREATE POLICY "Anyone can delete donation images"
+ON storage.objects FOR DELETE
+USING (bucket_id = 'donation-images');
+
 -- Success message
 SELECT 'Donations table created successfully!' AS message;

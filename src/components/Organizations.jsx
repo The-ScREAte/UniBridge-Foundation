@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { organizationService } from '../utils/storage';
 
@@ -7,22 +7,48 @@ const Organizations = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOrganizations = async () => {
-      try {
-        setLoading(true);
-        const orgs = await organizationService.getAllOrganizations({ onUpdate: setOrganizations });
-        setOrganizations(orgs);
-      } catch (error) {
+    let mounted = true;
+    organizationService.getAllOrganizations({ onUpdate: (data) => mounted && setOrganizations(data) })
+      .then((data) => {
+        if (mounted) {
+          setOrganizations(data);
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
         console.error('Failed to load organizations:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOrganizations();
+        if (mounted) setLoading(false);
+      });
+    return () => { mounted = false; };
   }, []);
 
-  // Memoize the empty state component
-  const emptyState = useMemo(() => (
+  if (loading) {
+    return (
+      <section id="organizations" className="bg-gray-50 px-2 py-8 sm:px-4 sm:py-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-unibridge-navy mb-4">Our Partner Organizations</h2>
+            <div className="w-20 h-1 bg-unibridge-blue mx-auto mb-6"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="rounded-3xl bg-white border border-gray-100 overflow-hidden animate-pulse">
+                <div className="bg-gray-200 aspect-[16/10]"></div>
+                <div className="p-6">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (organizations.length === 0) {
+    return (
       <section id="organizations" className="bg-gray-50 px-2 py-8 sm:px-4 sm:py-10">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-10">
@@ -52,26 +78,7 @@ const Organizations = () => {
           </div>
         </div>
       </section>
-    ), []);
-
-  if (loading) {
-    return (
-      <section id="organizations" className="bg-gray-50 px-2 py-8 sm:px-4 sm:py-10">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-unibridge-navy mb-4">Our Partner Organizations</h2>
-            <div className="w-20 h-1 bg-unibridge-blue mx-auto mb-6"></div>
-          </div>
-          <div className="flex justify-center py-12">
-            <div className="animate-pulse text-unibridge-blue">Loading organizations...</div>
-          </div>
-        </div>
-      </section>
     );
-  }
-
-  if (organizations.length === 0) {
-    return emptyState;
   }
 
   const featured = organizations.slice(0, 6);
@@ -100,7 +107,7 @@ const Organizations = () => {
               >
                 <div className="relative overflow-hidden bg-gray-200 aspect-[4/3]">
                   {org.profileImage ? (
-                    <img src={org.profileImage} alt={org.name} className="w-full h-full object-cover" />
+                    <img src={org.profileImage} alt={org.name} loading="lazy" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-unibridge-blue to-blue-600">
                       <span className="text-white text-4xl font-bold">{org.name?.charAt(0)}</span>
@@ -143,6 +150,7 @@ const Organizations = () => {
                   <img
                     src={org.profileImage}
                     alt={org.name}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                 ) : (

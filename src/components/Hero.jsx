@@ -27,10 +27,10 @@ const Hero = () => {
         {heroContent.use_video && heroContent.background_video ? (
           <>
             <video 
-              autoPlay 
               loop 
               muted 
               playsInline
+              preload="metadata"
               className="w-full h-full object-cover object-center"
             >
               <source src={heroContent.background_video} type="video/mp4" />
@@ -42,6 +42,8 @@ const Hero = () => {
             <img 
               src={heroContent.background_image || '/hero.png'} 
               alt="UniBridge Hero" 
+              loading="eager"
+              fetchpriority="high"
               className="w-full h-full object-cover object-center" 
             />
             <div className="absolute left-0 right-0 top-0 bottom-0 pointer-events-none" style={{ zIndex: 1, background: 'linear-gradient(to bottom, rgba(30,58,95,0.8) 0%, rgba(37,99,168,0.6) 80%, transparent 100%)' }} />
