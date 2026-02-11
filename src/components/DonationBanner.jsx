@@ -46,7 +46,7 @@ const DonationBanner = () => {
                   <img
                     src={donation.image}
                     alt={donation.name}
-                    className="w-full h-48 object-cover"
+                    className="w-full max-h-72 object-contain bg-gray-100"
                   />
                 )}
                 <div className="p-6">

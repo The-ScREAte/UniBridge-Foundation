@@ -33,33 +33,32 @@ const Home = () => {
   };
 
   useEffect(() => {
+    let mounted = true;
     const loadDonations = async () => {
       try {
-        // Only load if in viewport or about to be
-        const donationsSection = document.getElementById('donations');
-        if (!donationsSection) return;
-        
-        const donations = await donationService.getActiveDonations({ onUpdate: setActiveDonations });
-        setActiveDonations(donations);
+        const donations = await donationService.getActiveDonations({
+          onUpdate: (data) => mounted && setActiveDonations(data)
+        });
+        if (mounted) {
+          setActiveDonations(donations);
+        }
       } catch (error) {
         console.error('Error loading donations:', error);
       }
     };
-    
-    // Delay donation loading until user scrolls or after 2 seconds
-    const timer = setTimeout(loadDonations, 2000);
-    
-    const handleScroll = () => {
-      clearTimeout(timer);
-      loadDonations();
-      window.removeEventListener('scroll', handleScroll);
-    };
-    
-    window.addEventListener('scroll', handleScroll, { once: true, passive: true });
-    
+
+    loadDonations();
+
+    // Fail-safe: stop any perceived "waiting" even if the network is slow
+    const fallback = setTimeout(() => {
+      if (mounted) {
+        setActiveDonations((prev) => prev);
+      }
+    }, 4000);
+
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener('scroll', handleScroll);
+      mounted = false;
+      clearTimeout(fallback);
     };
   }, []);
 
@@ -153,7 +152,7 @@ const Home = () => {
                           src={donation.image}
                           alt={donation.name}
                           loading="lazy"
-                          className="w-full h-48 object-cover"
+                          className="w-full max-h-72 object-contain bg-gray-100"
                         />
                       )}
                       <div className="p-6">

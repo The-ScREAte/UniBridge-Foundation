@@ -4,18 +4,6 @@ import Footer from '../components/Footer';
 import { teamService, aboutService } from '../utils/storage';
 import { cacheManager } from '../utils/supabaseClient';
 
-// You can add team members through admin or hardcode them here
-const TEAM_MEMBERS = [
-  {
-    id: 1,
-    name: 'Founder Name',
-    role: 'Founder & CEO',
-    image: '', // Add image URL or upload through admin
-    bio: 'Leading UniBridge with a vision to connect opportunities worldwide.'
-  },
-  // Add more team members as needed
-];
-
 const AboutPage = () => {
   const [teamMembers, setTeamMembers] = useState([]);
   const [aboutContent, setAboutContent] = useState({
@@ -32,17 +20,17 @@ const AboutPage = () => {
       const cachedTeam = cacheManager.get('team_members');
       if (cachedTeam && Array.isArray(cachedTeam) && cachedTeam.length > 0) {
         const activeCached = cachedTeam.filter(member => member.is_active !== false);
-        setTeamMembers(activeCached.length > 0 ? activeCached : TEAM_MEMBERS);
+        setTeamMembers(activeCached);
       }
 
       // Load team members from Supabase
       const team = await teamService.getAllMembers({ onUpdate: (data) => {
         const active = data.filter(member => member.is_active !== false);
-        setTeamMembers(active.length > 0 ? active : TEAM_MEMBERS);
+        setTeamMembers(active);
       }});
       // Filter to only show active team members
       const activeMembers = team.filter(member => member.is_active !== false);
-      setTeamMembers(activeMembers.length > 0 ? activeMembers : TEAM_MEMBERS);
+      setTeamMembers(activeMembers);
 
       // Load about content from Supabase
       const content = await aboutService.getAboutContent();
@@ -56,6 +44,8 @@ const AboutPage = () => {
     
     fetchData();
   }, []);
+
+  const hasActiveTeam = teamMembers.length > 0;
 
   return (
     <div className="min-h-screen bg-white">
@@ -104,29 +94,24 @@ const AboutPage = () => {
         </div>
 
         {/* Team Section */}
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-unibridge-navy mb-4">
-              Our Team
-            </h2>
-            <div className="w-20 h-1 bg-unibridge-blue mx-auto mb-6"></div>
-            <p className="text-lg sm:text-xl text-gray-600">
-              The people making it happen
-            </p>
-          </div>
-
-          {teamMembers.length === 0 ? (
-            <div className="text-center py-16 bg-gray-50 rounded-xl">
-              <p className="text-gray-500">Team members will be added soon.</p>
+        {hasActiveTeam && (
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-unibridge-navy mb-4">
+                Our Team
+              </h2>
+              <div className="w-20 h-1 bg-unibridge-blue mx-auto mb-6"></div>
+              <p className="text-lg sm:text-xl text-gray-600">
+                The people making it happen
+              </p>
             </div>
-          ) : (
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-10 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 justify-items-center gap-6 sm:gap-8 lg:gap-10 max-w-6xl mx-auto">
               {teamMembers.map((member) => (
                 <button
                   key={member.id}
                   type="button"
                   onClick={() => setActiveTeamMember(member)}
-                  className="text-center group focus:outline-none basis-1/3 flex-shrink-0"
+                  className="text-center group focus:outline-none w-full max-w-[280px]"
                 >
                   <div className="mb-4 sm:mb-6">
                     {member.image ? (
@@ -155,8 +140,8 @@ const AboutPage = () => {
                 </button>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {activeTeamMember && (

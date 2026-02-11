@@ -6,34 +6,47 @@ import { cacheManager } from '../utils/supabaseClient';
 const Opportunities = ({ className = '' }) => {
   const [opportunities, setOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    const startTime = performance.now();
-    
-    // If cached data exists, show it immediately for instant render
-    const cached = cacheManager.get('all_opportunities');
-    if (cached && Array.isArray(cached) && cached.length > 0) {
-      setOpportunities(cached);
-      setLoading(false);
-    }
 
-    opportunityService.getAllOpportunities({ onUpdate: (data) => mounted && setOpportunities(data) })
-      .then((data) => {
+    // Clear any stale cache to force a fresh fetch (preload may have stored empty [])
+    cacheManager.clear('all_opportunities');
+
+    console.log('🔄 Opportunities: Fetching fresh...');
+    opportunityService.getAllOpportunities({
+      onUpdate: (data) => {
+        console.log('🔔 Opportunities: onUpdate', data?.length, 'items');
         if (mounted) {
-          console.log(`Opportunities loaded: ${data?.length || 0} items in ${Math.round(performance.now() - startTime)}ms`);
-          setOpportunities(data);
+          setOpportunities(data || []);
+          setHasLoaded(true);
           setLoading(false);
+        }
+      }
+    })
+      .then((data) => {
+        console.log('✅ Opportunities: Loaded', data?.length, 'items', data);
+        if (mounted) {
+          setOpportunities(data || []);
+          setLoading(false);
+          setHasLoaded(true);
         }
       })
       .catch((error) => {
-        console.error('Failed to load opportunities:', error);
-        if (mounted) setLoading(false);
+        console.error('❌ Opportunities: Error', error);
+        if (mounted) {
+          setLoading(false);
+          setHasLoaded(true);
+        }
       });
     return () => { mounted = false; };
   }, []);
 
+  console.log('🎬 Opportunities: Render - loading:', loading, 'count:', opportunities?.length, 'hasLoaded:', hasLoaded);
+
   if (loading) {
+    console.log('⏳ Opportunities: Showing skeleton');
     return (
       <section id="opportunities" className={`ub-section ${className}`.trim()}>
         <div className="ub-container">
@@ -58,14 +71,29 @@ const Opportunities = ({ className = '' }) => {
     );
   }
 
-  if (opportunities.length === 0) {
-    return null;
+  // Don't show empty state until loading is done AND we have no opportunities
+  if (!loading && hasLoaded && (!opportunities || opportunities.length === 0)) {
+    console.log('⚠️ Opportunities: Empty, showing message');
+    return (
+      <section id="opportunities" className={`ub-section ${className}`.trim()}>
+        <div className="ub-container">
+          <div className="text-center py-12">
+            <h2 className="ub-section-title">Volunteering Needs & Service Opportunities</h2>
+            <div className="mt-4 w-20 h-1 bg-unibridge-blue mx-auto"></div>
+            <p className="mt-8 text-gray-500 text-lg">No opportunities available at the moment. Check back soon!</p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
-  // Show only first 6 for fast rendering
-  const featured = opportunities.slice(0, 6);
+  // If we have opportunities, show them even if still loading
+  if (opportunities && opportunities.length > 0) {
+    console.log('🎨 Opportunities: Rendering', opportunities.length, 'items');
+    // Show only first 6 for fast rendering
+    const featured = opportunities.slice(0, 6);
 
-  return (
+    return (
     <section id="opportunities" className={`ub-section ${className}`.trim()}>
       <div className="ub-container">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10 pt-5">
@@ -134,7 +162,12 @@ const Opportunities = ({ className = '' }) => {
         </div>
       </div>
     </section>
-  );
+    );
+  }
+
+  // Still loading and no data yet
+  console.log('⏳ Opportunities: Still loading with no data yet');
+  return null;
 };
 
 export default Opportunities;

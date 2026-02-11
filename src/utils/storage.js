@@ -16,25 +16,23 @@ const refreshTimers = new Map();
 const staleWhileRevalidate = async ({ cacheKey, fetcher, onUpdate }) => {
   const cached = cacheManager.get(cacheKey);
   if (cached) {
-    // Debounce background refresh to prevent cascade
+    // Immediate background refresh - no delay
     if (!refreshTimers.has(cacheKey)) {
-      const timerId = setTimeout(() => {
-        Promise.resolve()
-          .then(async () => {
-            const fresh = await fetcher();
-            cacheManager.set(cacheKey, fresh);
-            if (onUpdate) {
-              const freshStr = safeStringify(fresh);
-              const cachedStr = safeStringify(cached);
-              if (freshStr !== cachedStr) {
-                onUpdate(fresh);
-              }
+      refreshTimers.set(cacheKey, true);
+      Promise.resolve()
+        .then(async () => {
+          const fresh = await fetcher();
+          cacheManager.set(cacheKey, fresh);
+          if (onUpdate) {
+            const freshStr = safeStringify(fresh);
+            const cachedStr = safeStringify(cached);
+            if (freshStr !== cachedStr) {
+              onUpdate(fresh);
             }
-          })
-          .catch((err) => console.error('Background refresh failed:', err))
-          .finally(() => refreshTimers.delete(cacheKey));
-      }, 500); // Reduced to 500ms for faster background refresh
-      refreshTimers.set(cacheKey, timerId);
+          }
+        })
+        .catch((err) => console.error('Background refresh failed:', err))
+        .finally(() => refreshTimers.delete(cacheKey));
     }
 
     return cached;
